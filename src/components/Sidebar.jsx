@@ -10,7 +10,7 @@ import {
   IconBarChart,
 } from "./icons.jsx";
 import TerraTechPacks from "../assets/TerraTechPacks.png";
-import { Link } from "react-router-dom";
+import { Link, useLocation  } from "react-router-dom";
 
 // --- Helper Components ---
 
@@ -64,7 +64,7 @@ const MenuItem = ({ icon: IconComponent, text, isActive, hasSub, onClick }) => {
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-[0.7vw]">
           <IconComponent className="w-[1.2vw] h-[1.2vw] min-w-[1.2vw]" />
-          <span className="text-[1vw]">{text}</span>
+          <span className="text-[.85vw]">{text}</span>
         </div>
         {hasSub && (
           <IconChevronDown
@@ -83,10 +83,10 @@ const SubMenuItem = ({ text, icon: IconComponent, isSelected }) => (
   // Added subtle horizontal padding to indent subitems slightly inside the border
   <div className={`px-[0vw] mt-[0.1vw]`}>
     <div
-      className={`flex items-center gap-[0.7vw] w-full px-[1.2vw] py-[0.8vw] rounded-[0.4vw] cursor-pointer transition-colors text-[1vw]
+      className={`flex items-center gap-[0.7vw] w-full px-[1.2vw] py-[0.8vw] rounded-[0.4vw] cursor-pointer transition-colors text-[.85vw]
                 ${
                   isSelected
-                    ? "bg-blue-600 shadow-lg text-white font-semibold"
+                    ? "bg-blue-600 text-white font-semibold"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
                 }
             `}
@@ -101,6 +101,18 @@ const SubMenuItem = ({ text, icon: IconComponent, isSelected }) => (
 
 const Sidebar = () => {
   const [openMenu, setOpenMenu] = useState(null);
+
+
+   const location = useLocation();
+  const currentPath = location.pathname;
+
+  // Active menu detection
+  const isOrdersActive = currentPath.startsWith("/iml");
+  const isScreenPrintingActive = currentPath.startsWith("/screen");
+
+  const isNewOrder = currentPath === "/iml/new-order";
+  const isReports = currentPath === "/reports";
+
 
   const toggleMenu = (menu) => {
     setOpenMenu(openMenu === menu ? null : menu);
@@ -122,19 +134,19 @@ const Sidebar = () => {
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-[18vw] text-white flex flex-col overflow-y-auto z-50 shadow-2xl"
+      className="w-[15%] left-0 top-0 h-screen text-white flex flex-col overflow-y-auto z-50 shadow-2xl"
       style={{
         backgroundImage:
           "linear-gradient(to bottom, #2638A0 60%, #2485B8 100%)",
       }}
     >
       {/* Brand */}
-      <div className="h-[5vw] flex items-center px-[1.5vw] border-b border-white/10">
+      <div className="h-[5vw] flex items-center px-[1.5vw] border-b border-white/10 justify-center">
         <div className="h-[5vw] flex items-center">
           <img
             src={TerraTechPacks}
             alt="TerraTech Packs Logo"
-            className="w-[11vw] "
+            className="w-[9.5vw] "
           />
         </div>
       </div>
@@ -157,7 +169,7 @@ const Sidebar = () => {
             icon={IconCart}
             text="IML / Orders"
             hasSub={true}
-            isActive={openMenu === "orders"}
+            isActive={isOrdersActive} 
             onClick={() => toggleMenu("orders")}
           />
           <SmoothCollapse isOpen={openMenu === "orders"}>
@@ -166,7 +178,7 @@ const Sidebar = () => {
                 <SubMenuItem
                   text="New order"
                   icon={IconFilePlus}
-                  isSelected={false}
+                  isSelected={isNewOrder}
                 />
               </Link>
             </SmoothCollapse>
@@ -211,12 +223,14 @@ const Sidebar = () => {
 
         {/* Standard Item */}
         <div className="px-[0.5vw]">
+          <Link to='/reports'>
           <MenuItem
             icon={IconBarChart}
             text="Reports"
-            isActive={false}
+            isActive={isReports}
             onClick={() => {}}
           />
+          </Link>
         </div>
       </nav>
 
@@ -230,7 +244,7 @@ const Sidebar = () => {
           />
         </div>
         <div>
-          <div className="text-[1vw] font-semibold">User Name</div>
+          <div className="text-[.95vw] font-semibold">User Name</div>
           <div className="text-[0.8vw] opacity-70">Admin</div>
         </div>
       </div>

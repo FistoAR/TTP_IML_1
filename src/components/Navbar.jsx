@@ -6,7 +6,7 @@ const Navbar = () => {
   return (
     <header className="h-[5vw] bg-white shadow-md/20 flex items-center justify-between px-[2vw] sticky top-0 z-40 border-b border-gray-100">
       {/* Search */}
-      <div className="relative w-[35vw]">
+      <div className="relative w-[35vw] opacity-0 pointer-events-none">
         <div className="absolute left-[1vw] top-1/2 -translate-y-1/2 text-gray-400">
           <IconSearch className="w-[1.1vw] h-[1.1vw]" />
         </div>

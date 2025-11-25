@@ -243,14 +243,14 @@ export default function NewOrder() {
                 {!product.isCollapsed && (
                   <>
                     {/* Order Number Display */}
-                    <div className="mb-[1.5vw] p-[1vw] bg-blue-50 border border-blue-200 rounded-[0.5vw]">
+                    <div className="mb-[1.25vw] p-[1vw] bg-blue-50 border border-blue-200 rounded-[0.5vw]">
                       <span className="text-[0.9vw] font-semibold text-blue-900">
                         Order Number: {product.orderNumber}
                       </span>
                     </div>
 
                     {/* Product Basic Details Section */}
-                    <div className="bg-white rounded-[0.6vw] border-2 border-blue-200 p-[1.5vw] mb-[1.5vw]">
+                    <div className="bg-white rounded-[0.6vw] border-2 border-blue-200 p-[1.5vw] mb-[1.25vw]">
                       <h3 className="text-[1vw] font-semibold text-blue-900 mb-[1vw]">
                         Product Basic Details
                       </h3>
@@ -404,7 +404,7 @@ export default function NewOrder() {
                     </div>
 
                     {/* Design Type Toggle - Before Design Selection */}
-                    <div className="flex justify-end gap-[0.8vw] mb-[1.5vw]">
+                    <div className="flex justify-end gap-[0.8vw] mb-[1.25vw]">
                       <button
                         onClick={() =>
                           updateProduct(product.id, "designType", "existing")
@@ -432,7 +432,7 @@ export default function NewOrder() {
                     </div>
 
                     {/* Design Selection Section */}
-                    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-[0.6vw] border-2 border-purple-200 p-[1.5vw] mb-[1.5vw]">
+                    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-[0.6vw] border-2 border-purple-200 p-[1.5vw] mb-[1.25vw]">
                       <h3 className="text-[1vw] font-semibold text-purple-900 mb-[1vw]">
                         Design Selection
                       </h3>
@@ -543,7 +543,7 @@ export default function NewOrder() {
                         // New Design - Checkbox first, then status dropdown
                         <div>
                           {/* Design Shared Checkbox - FIRST */}
-                          <div className="mb-[1.5vw]">
+                          <div className="mb-[1.25vw]">
                             <label className="flex items-center gap-[0.6vw] text-[0.9vw] text-gray-700 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -1249,7 +1249,7 @@ function Section({ title, children, onClick, isCollapsed }) {
       >
         {title}
       </div>
-      <div className="bg-gray-50 p-[2vw] rounded-b-[0.6vw] border border-gray-200 border-t-0">
+      <div className="bg-gray-50 p-[1.25vw] rounded-b-[0.6vw] border border-gray-200 border-t-0">
         {children}
       </div>
     </div>
