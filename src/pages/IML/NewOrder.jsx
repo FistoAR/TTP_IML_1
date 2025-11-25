@@ -1,5 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { RgbaColorPicker } from "react-colorful";
+import * as pdfjsLib from "pdfjs-dist";
+
+import design1PDF from "../../assets/pdf/design1.pdf";
+import design2PDF from "../../assets/pdf/design2.pdf";
+import design3PDF from "../../assets/pdf/design3.pdf";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 export default function NewOrder() {
   const [contact, setContact] = useState({
@@ -18,6 +28,11 @@ export default function NewOrder() {
     "Sweet Box TE": ["TE 250gms", "TE 500gms"],
   };
 
+  const OLD_DESIGN_FILES = [
+    { id: 1, name: "Design 1", path: design1PDF, type: "pdf" },
+    { id: 2, name: "Design 2", path: design2PDF, type: "pdf" },
+    { id: 3, name: "Design 3", path: design3PDF, type: "pdf" },
+  ];
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
@@ -87,6 +102,17 @@ export default function NewOrder() {
     );
   };
 
+  const [customerType, setCustomerType] = useState("existing"); // "existing" or "new"
+
+  const [pdfPreviews, setPdfPreviews] = useState({});
+
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    type: null, // 'pdf' or 'image'
+    path: null,
+    name: null,
+  });
+
   // Add new product
   const addProduct = () => {
     const newProduct = {
@@ -143,6 +169,249 @@ export default function NewOrder() {
     return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
   };
 
+  // Generate PDF thumbnail from first page
+  // Generate PDF thumbnail from first page
+  const generatePdfThumbnail = async (file, productId) => {
+    try {
+      const fileReader = new FileReader();
+
+      fileReader.onload = async function () {
+        try {
+          const typedArray = new Uint8Array(this.result);
+
+          // Load the PDF document
+          const loadingTask = pdfjsLib.getDocument({
+            data: typedArray,
+            cMapUrl: "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/",
+            cMapPacked: true,
+          });
+
+          const pdf = await loadingTask.promise;
+
+          // Get the first page
+          const page = await pdf.getPage(1);
+
+          // Set scale for thumbnail
+          const scale = 1.5; // Increased for better quality
+          const viewport = page.getViewport({ scale });
+
+          // Create canvas
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Render PDF page to canvas
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport,
+          };
+
+          await page.render(renderContext).promise;
+
+          // Convert canvas to data URL
+          const thumbnailUrl = canvas.toDataURL("image/png");
+
+          // Store thumbnail in state
+          setPdfPreviews((prev) => ({
+            ...prev,
+            [productId]: thumbnailUrl,
+          }));
+
+          console.log(
+            "PDF thumbnail generated successfully for product:",
+            productId
+          );
+        } catch (error) {
+          console.error("Error rendering PDF:", error);
+          // Set error state if needed
+          setPdfPreviews((prev) => ({
+            ...prev,
+            [productId]: "error",
+          }));
+        }
+      };
+
+      fileReader.onerror = function (error) {
+        console.error("FileReader error:", error);
+      };
+
+      fileReader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error("Error generating PDF thumbnail:", error);
+    }
+  };
+
+  // Generate PDF thumbnail from URL (for existing designs)
+  const generatePdfThumbnailFromUrl = async (pdfUrl, previewId) => {
+    try {
+      // Fetch the PDF file
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+
+      const fileReader = new FileReader();
+
+      fileReader.onload = async function () {
+        try {
+          const typedArray = new Uint8Array(this.result);
+
+          // Load the PDF document
+          const loadingTask = pdfjsLib.getDocument({
+            data: typedArray,
+            cMapUrl: "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/",
+            cMapPacked: true,
+          });
+
+          const pdf = await loadingTask.promise;
+
+          // Get the first page
+          const page = await pdf.getPage(1);
+
+          // Set scale for thumbnail
+          const scale = 1.5;
+          const viewport = page.getViewport({ scale });
+
+          // Create canvas
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Render PDF page to canvas
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport,
+          };
+
+          await page.render(renderContext).promise;
+
+          // Convert canvas to data URL
+          const thumbnailUrl = canvas.toDataURL("image/png");
+
+          // Store thumbnail in state
+          setPdfPreviews((prev) => ({
+            ...prev,
+            [previewId]: thumbnailUrl,
+          }));
+
+          console.log("PDF thumbnail generated successfully for:", previewId);
+        } catch (error) {
+          console.error("Error rendering PDF:", error);
+          setPdfPreviews((prev) => ({
+            ...prev,
+            [previewId]: "error",
+          }));
+        }
+      };
+
+      fileReader.onerror = function (error) {
+        console.error("FileReader error:", error);
+      };
+
+      fileReader.readAsArrayBuffer(blob);
+    } catch (error) {
+      console.error("Error fetching PDF:", error);
+    }
+  };
+
+  useEffect(() => {
+    const pdfDesigns = OLD_DESIGN_FILES.filter(
+      (design) => design.type === "pdf"
+    );
+
+    pdfDesigns.forEach((design) => {
+      // Only generate if not already in state
+      if (!pdfPreviews[`old-${design.id}`]) {
+        generatePdfThumbnailFromUrl(design.path, `old-${design.id}`);
+      }
+    });
+  }, []); // Empty dependency array - runs once on mount
+
+  // Auto-select "New Design" when "New Customer" is selected
+  useEffect(() => {
+    if (customerType === "new") {
+      setProducts(
+        products.map((p) => ({
+          ...p,
+          designType: "new",
+        }))
+      );
+    }
+  }, [customerType]);
+
+  // Preview Modal Component
+  const PreviewModal = () => {
+    if (!previewModal.isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-[#000000ad] bg-opacity-70 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg overflow-hidden max-w-6xl w-full max-h-90vh flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-300 bg-gray-50">
+            <h2 className="text-[1.25vw] font-semibold text-gray-800">
+              Preview: {previewModal.name}
+            </h2>
+            <button
+              onClick={() =>
+                setPreviewModal({
+                  isOpen: false,
+                  type: null,
+                  path: null,
+                  name: null,
+                })
+              }
+              className="text-gray-500 hover:text-gray-800 text-2vw font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+            {previewModal.type === "pdf" ? (
+              <iframe
+                src={`${previewModal.path}#toolbar=1&navpanes=0`}
+                title={previewModal.name}
+                className="w-full h-full border-0"
+                style={{ minHeight: "60vh" }}
+              />
+            ) : (
+              <img
+                src={previewModal.path}
+                alt={previewModal.name}
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 p-4 border-t border-gray-300 bg-gray-50">
+            <button
+              onClick={() =>
+                setPreviewModal({
+                  isOpen: false,
+                  type: null,
+                  path: null,
+                  name: null,
+                })
+              }
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-[0.4vw] cursor-pointer hover:bg-gray-400 hover:text-white font-medium text-0.9vw"
+            >
+              Close
+            </button>
+            <a
+              href={previewModal.path}
+              download={previewModal.name}
+              className="px-4 py-2 bg-blue-600 text-white rounded-[0.4vw] hover:bg-blue-700 font-medium text-0.9vw"
+            >
+              Download
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-0">
       <div className="max-w-[90vw] mx-auto bg-white rounded-[0.8vw] shadow-sm">
@@ -152,10 +421,24 @@ export default function NewOrder() {
             Orders/IML Details
           </h1>
           <div className="flex gap-[0.5vw] p-[0.25vw] bg-blue-600 rounded-full">
-            <button className="px-[1.5vw] py-[0.6vw] border-2 border-blue-600 text-blue-600 bg-white rounded-full text-[0.9vw] font-medium cursor-pointer transition-all duration-200 hover:bg-blue-50">
+            <button
+              onClick={() => setCustomerType("existing")}
+              className={`px-[1.5vw] py-[0.6vw] border-2 border-blue-600 rounded-full text-[0.9vw] font-medium cursor-pointer transition-all duration-200 ${
+                customerType === "existing"
+                  ? "border-blue-600 text-blue-600 bg-white"
+                  : "bg-blue-600 text-white border-blue-600 hover:bg-blue-500"
+              }`}
+            >
               Existing Customer
             </button>
-            <button className="px-[1.5vw] py-[0.6vw] bg-blue-600 text-white border-none rounded-full text-[0.9vw] font-medium cursor-pointer transition-all duration-200 hover:bg-blue-700">
+            <button
+              onClick={() => setCustomerType("new")}
+              className={`px-[1.5vw] py-[0.6vw] border-none rounded-full text-[0.9vw] font-medium cursor-pointer transition-all duration-200 ${
+                customerType === "new"
+                  ? "border-blue-600 text-blue-600 bg-white"
+                  : "bg-blue-600 text-white border-blue-600 hover:bg-blue-500"
+              }`}
+            >
               New Customer
             </button>
           </div>
@@ -300,7 +583,6 @@ export default function NewOrder() {
                           disabled={!product.productName}
                         />
 
-                       
                         <Select
                           label="IML Type"
                           required
@@ -405,18 +687,21 @@ export default function NewOrder() {
 
                     {/* Design Type Toggle - Before Design Selection */}
                     <div className="flex justify-end gap-[0.8vw] mb-[1.25vw]">
-                      <button
-                        onClick={() =>
-                          updateProduct(product.id, "designType", "existing")
-                        }
-                        className={`px-[2vw] py-[0.6vw] rounded-[0.4vw] cursor-pointer text-[0.9vw] font-medium transition-all duration-200 ${
-                          product.designType === "existing"
-                            ? "bg-blue-600 text-white shadow-md"
-                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
-                      >
-                        Existing Design
-                      </button>
+                      {/* Only show Existing Design button if customerType is "existing" */}
+                      {customerType === "existing" && (
+                        <button
+                          onClick={() =>
+                            updateProduct(product.id, "designType", "existing")
+                          }
+                          className={`px-[2vw] py-[0.6vw] rounded-[0.4vw] cursor-pointer text-[0.9vw] font-medium transition-all duration-200 ${
+                            product.designType === "existing"
+                              ? "bg-blue-600 text-white shadow-md"
+                              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                          }`}
+                        >
+                          Existing Design
+                        </button>
+                      )}
                       <button
                         onClick={() =>
                           updateProduct(product.id, "designType", "new")
@@ -443,30 +728,52 @@ export default function NewOrder() {
                         <div className="grid grid-cols-2 gap-[2vw]">
                           <div>
                             <label className="block text-[0.9vw] font-medium text-gray-700 mb-[0.5vw]">
-                              Old Design Files{" "}
+                              Old Design Files
                             </label>
                             <div className="border-2 border-dashed border-gray-300 rounded-[0.6vw] p-[2vw] min-h-[15vw] bg-white mb-[1vw]">
                               <div className="grid grid-cols-3 gap-[1.5vw]">
-                                {[
-                                  {
-                                    id: 1,
-                                    name: "design1.png",
-                                    thumbnail: "🎨",
-                                  },
-                                  {
-                                    id: 2,
-                                    name: "design2.png",
-                                    thumbnail: "🏛️",
-                                  },
-                                  {
-                                    id: 3,
-                                    name: "design3.png",
-                                    thumbnail: "👟",
-                                  },
-                                ].map((file) => (
+                                {OLD_DESIGN_FILES.map((file) => (
                                   <div key={file.id} className="text-center">
-                                    <div className="w-[6vw] h-[6vw] mx-auto bg-yellow-400 rounded-[0.6vw] flex items-center justify-center text-[3vw] mb-[0.8vw]">
-                                      {file.thumbnail}
+                                    <div className="w-[6vw] h-[6vw] mx-auto bg-gray-100 rounded-[0.6vw] flex items-center justify-center text-[3vw] mb-[0.8vw] border-2 border-gray-300 overflow-hidden">
+                                      {/* Show thumbnail based on type */}
+                                      {file.type === "pdf" ? (
+                                        pdfPreviews[`old-${file.id}`] ? (
+                                          <img
+                                            src={pdfPreviews[`old-${file.id}`]}
+                                            alt={file.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="flex flex-col items-center">
+                                            <svg
+                                              className="w-[3vw] h-[3vw] text-red-500"
+                                              fill="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+                                              <path
+                                                d="M14 2v6h6M10 13h4m-4 4h4"
+                                                stroke="white"
+                                                strokeWidth="1"
+                                              />
+                                            </svg>
+                                            <span className="text-[0.6vw] text-gray-500 mt-1">
+                                              Loading...
+                                            </span>
+                                          </div>
+                                        )
+                                      ) : (
+                                        <img
+                                          src={file.path}
+                                          alt={file.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            e.target.style.display = "none";
+                                            e.target.parentElement.innerHTML =
+                                              '<span class="text-[2vw]">🖼️</span>';
+                                          }}
+                                        />
+                                      )}
                                     </div>
                                     <label className="flex items-center justify-center gap-[0.4vw] text-[0.75vw] text-gray-500 cursor-pointer">
                                       <input
@@ -475,17 +782,27 @@ export default function NewOrder() {
                                         checked={
                                           product.selectedOldDesign === file.id
                                         }
-                                        onChange={() =>
+                                        onChange={() => {
                                           updateProduct(
                                             product.id,
                                             "selectedOldDesign",
                                             file.id
-                                          )
-                                        }
+                                          );
+                                          // Generate PDF thumbnail if not already generated
+                                          if (
+                                            file.type === "pdf" &&
+                                            !pdfPreviews[`old-${file.id}`]
+                                          ) {
+                                            generatePdfThumbnailFromUrl(
+                                              file.path,
+                                              `old-${file.id}`
+                                            );
+                                          }
+                                        }}
                                         className="w-[0.9vw] h-[0.9vw] cursor-pointer"
                                       />
-                                      <span className="text-[0.75vw]">
-                                        Select
+                                      <span className="text-[0.75vw] font-medium">
+                                        {file.name}
                                       </span>
                                     </label>
                                   </div>
@@ -519,18 +836,84 @@ export default function NewOrder() {
                             </label>
                             <div className="border-2 border-gray-300 rounded-[0.6vw] p-[2vw] min-h-[15vw] bg-white flex items-center justify-center">
                               {product.selectedOldDesign ? (
-                                <div className="text-center">
-                                  <div className="w-[10vw] h-[10vw] mx-auto bg-yellow-400 rounded-[0.6vw] flex items-center justify-center text-[5vw] mb-[1vw]">
-                                    {product.selectedOldDesign === 1
-                                      ? "🎨"
-                                      : product.selectedOldDesign === 2
-                                      ? "🏛️"
-                                      : "👟"}
-                                  </div>
-                                  <p className="text-[0.9vw] text-gray-700 font-medium">
-                                    Design {product.selectedOldDesign}
-                                  </p>
-                                </div>
+                                (() => {
+                                  const selectedFile = OLD_DESIGN_FILES.find(
+                                    (f) => f.id === product.selectedOldDesign
+                                  );
+
+                                  return (
+                                    <div className="text-center w-full">
+                                      <div className="w-full h-auto max-h-[12vw] mx-auto rounded-[0.6vw] flex items-center justify-center mb-[1vw] overflow-hidden">
+                                        {selectedFile.type === "pdf" ? (
+                                          pdfPreviews[
+                                            `old-${selectedFile.id}`
+                                          ] ? (
+                                            <img
+                                              src={
+                                                pdfPreviews[
+                                                  `old-${selectedFile.id}`
+                                                ]
+                                              }
+                                              alt={selectedFile.name}
+                                              className="w-full h-auto max-h-[6.5vw] object-contain"
+                                            />
+                                          ) : (
+                                            <div className="flex flex-col items-center py-4">
+                                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                                              <p className="text-gray-500 text-[0.8vw]">
+                                                Loading PDF preview...
+                                              </p>
+                                            </div>
+                                          )
+                                        ) : (
+                                          <img
+                                            src={selectedFile.path}
+                                            alt={selectedFile.name}
+                                            className="w-full h-auto max-h-[12vw] object-contain"
+                                          />
+                                        )}
+                                      </div>
+                                      <p className="text-[0.9vw] text-gray-700 font-medium mb-1">
+                                        {selectedFile.name}
+                                      </p>
+                                      <span
+                                        className={`inline-block px-3 py-1 rounded text-[0.75vw] font-medium ${
+                                          selectedFile.type === "pdf"
+                                            ? "bg-red-100 text-red-700"
+                                            : "bg-blue-100 text-blue-700"
+                                        }`}
+                                      >
+                                        {selectedFile.type === "pdf"
+                                          ? "PDF"
+                                          : "Image"}
+                                      </span>
+
+                                      <div className="flex justify-end gap-1vw mt-2vw">
+                                        <button
+                                          onClick={() => {
+                                            const selectedFile =
+                                              OLD_DESIGN_FILES.find(
+                                                (f) =>
+                                                  f.id ===
+                                                  product.selectedOldDesign
+                                              );
+                                            if (selectedFile) {
+                                              setPreviewModal({
+                                                isOpen: true,
+                                                type: selectedFile.type,
+                                                path: selectedFile.path,
+                                                name: selectedFile.name,
+                                              });
+                                            }
+                                          }}
+                                          className="px-2vw py-0.6vw bg-blue-600 text-white rounded-0.4vw hover:bg-blue-700 font-medium text-0.85vw transition-all"
+                                        >
+                                          👁️ Preview Full
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })()
                               ) : (
                                 <p className="text-[0.9vw] text-gray-400">
                                   No design selected
@@ -591,7 +974,7 @@ export default function NewOrder() {
 
                             {/* Approve Date - only show if approved */}
                             {product.designStatus === "approved" && (
-                              <div >
+                              <div>
                                 <label className="block text-[0.9vw] font-medium text-gray-700 mb-[0.5vw]">
                                   Approve Date{" "}
                                   <span className="text-red-500">*</span>
@@ -614,19 +997,141 @@ export default function NewOrder() {
 
                           {/* Upload - only enabled if approved */}
                           {product.designStatus === "approved" && (
-                            <div className="mt-[1.5vw] w-[50%]">
-                              <label className="block text-[0.9vw] font-medium text-gray-700 mb-[0.5vw]">
+                            <div className="mt-[1.5vw]">
+                              <label className="block text-0.9vw font-medium text-gray-700 mb-[0.5vw]">
                                 Upload New Design File{" "}
                                 <span className="text-red-500">*</span>
                               </label>
-                              <FileUploadBox
-                                file={product.designFile}
-                                onFileChange={(file) =>
-                                  updateProduct(product.id, "designFile", file)
-                                }
-                                productId={product.id}
-                                small
-                              />
+
+                              {/* Side by side layout - Upload box and Preview */}
+                              <div className="grid grid-cols-2 gap-[2vw]">
+                                {/* Left: Upload Box */}
+                                <div>
+                                  <FileUploadBox
+                                    file={product.designFile}
+                                    onFileChange={(file) => {
+                                      updateProduct(
+                                        product.id,
+                                        "designFile",
+                                        file
+                                      );
+
+                                      // Generate PDF thumbnail if it's a PDF file
+                                      if (
+                                        file &&
+                                        file.type === "application/pdf"
+                                      ) {
+                                        generatePdfThumbnail(file, product.id);
+                                      }
+                                    }}
+                                    productId={product.id}
+                                    small
+                                  />
+                                </div>
+
+                                {/* Right: Preview Panel */}
+                                <div>
+                                  {product.designFile ? (
+                                    <div className="p-[1vw] bg-gray-50 rounded-0.4vw border-2 border-gray-300 h-full">
+                                      <p className="text-[0.85vw] font-medium text-gray-700 mb-[0.5vw]">
+                                        Preview:
+                                      </p>
+
+                                      {/* Show PDF thumbnail or image preview */}
+                                      {product.designFile.type ===
+                                      "application/pdf" ? (
+                                        <div className="mb-[1vw]">
+                                          {pdfPreviews[product.id] ? (
+                                            <img
+                                              src={pdfPreviews[product.id]}
+                                              alt="PDF Preview"
+                                              className="w-full h-auto border border-gray-300 rounded"
+                                              style={{
+                                                maxHeight: "180px",
+                                                objectFit: "contain",
+                                              }}
+                                            />
+                                          ) : (
+                                            <div className="flex flex-col items-center justify-center h-32 bg-gray-200 rounded">
+                                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                                              <p className="text-gray-500 text-0.8vw">
+                                                Generating preview...
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        product.designFile.type.startsWith(
+                                          "image/"
+                                        ) && (
+                                          <img
+                                            src={URL.createObjectURL(
+                                              product.designFile
+                                            )}
+                                            alt="Design Preview"
+                                            className="w-full h-auto mb-1vw border border-gray-300 rounded"
+                                            style={{
+                                              maxHeight: "180px",
+                                              objectFit: "contain",
+                                            }}
+                                          />
+                                        )
+                                      )}
+
+                                      <div className="mt-2">
+                                        <div className="flex items-center justify-between text-0.75vw">
+                                          <span className="text-gray-600 truncate pr-2">
+                                            {product.designFile.name}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-0.7vw mt-1">
+                                          <span className="text-gray-500">
+                                            {(
+                                              product.designFile.size / 1024
+                                            ).toFixed(2)}{" "}
+                                            KB
+                                          </span>
+                                          <span
+                                            className={`px-2 py-0.5 rounded text-0.65vw font-medium ${
+                                              product.designFile.type ===
+                                              "application/pdf"
+                                                ? "bg-red-100 text-red-700"
+                                                : "bg-blue-100 text-blue-700"
+                                            }`}
+                                          >
+                                            {product.designFile.type ===
+                                            "application/pdf"
+                                              ? "PDF"
+                                              : "Image"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          const fileUrl = URL.createObjectURL(
+                                            product.designFile
+                                          );
+                                          setPreviewModal({
+                                            isOpen: true,
+                                            type:
+                                              product.designFile.type ===
+                                              "application/pdf"
+                                                ? "pdf"
+                                                : "image",
+                                            path: fileUrl,
+                                            name: product.designFile.name,
+                                          });
+                                        }}
+                                        className="ml-2vw px-1.5vw py-0.5vw bg-green-600 text-white rounded-0.4vw hover:bg-green-700 font-medium text-0.75vw whitespace-nowrap transition-all"
+                                      >
+                                        👁️ Preview
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <></>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -761,6 +1266,7 @@ export default function NewOrder() {
           </Section>
         </div>
       </div>
+      <PreviewModal />
     </div>
   );
 }
@@ -1084,10 +1590,15 @@ function FileUploadBox({ file, onFileChange, productId, small }) {
       <div className="flex flex-col items-center justify-center h-full">
         <input
           type="file"
-          id={`file-upload-${productId}`}
+          accept="image/*,application/pdf"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              onFileChange(file); // Just pass the file to parent
+            }
+          }}
           className="hidden"
-          onChange={handleInputChange}
-          accept="image/*,.pdf"
+          id={`file-upload-${productId}`}
         />
 
         {!file ? (

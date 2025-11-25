@@ -111,6 +111,7 @@ const Sidebar = () => {
   const isScreenPrintingActive = currentPath.startsWith("/screen");
 
   const isNewOrder = currentPath === "/iml/new-order";
+  const isPurchase = currentPath === "/iml/purchase";
   const isReports = currentPath === "/reports";
 
 
@@ -182,7 +183,9 @@ const Sidebar = () => {
                 />
               </Link>
             </SmoothCollapse>
-            <SubMenuItem text="Purchase" icon={IconBox} isSelected={false} />
+            <Link to="/iml/purchase">
+              <SubMenuItem text="Purchase" icon={IconBox} isSelected={isPurchase} />
+            </Link>
             <SubMenuItem
               text="Production"
               icon={IconSettings}

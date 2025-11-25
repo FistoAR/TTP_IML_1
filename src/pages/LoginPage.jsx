@@ -6,6 +6,7 @@ import {
   IconEyeOff,
 } from "../components/icons.jsx";
 import TerraTechPacks from "../assets/TerraTechPacks.png";
+import { Link } from "react-router-dom";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -83,12 +84,14 @@ const LoginPage = () => {
 
             {/* Submit Button - Full Width with Gradient */}
             <div className="mt-[1vw]">
+              <Link to='/'>
                 <button
                 type="submit"
                 className="w-full cursor-pointer bg-gradient-to-r from-[#263895] to-[#2485b8] text-white text-[1vw] font-semibold py-[1vw] rounded-[0.8vw] shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
                 >
                 Login
                 </button>
+              </Link>
             </div>
             </form>
         </div>

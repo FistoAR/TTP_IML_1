@@ -1,10 +1,11 @@
 import React from 'react';
 // Corrected the import path to explicitly include the .jsx extension
 import { IconSearch, IconFilter, IconBell, IconSettings, IconLogout } from './icons.jsx';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   return (
-    <header className="h-[5vw] bg-white shadow-md/20 flex items-center justify-between px-[2vw] sticky top-0 z-40 border-b border-gray-100">
+    <header className="h-[5vw] min-h-[5vw] bg-white shadow-md/20 flex items-center justify-between px-[2vw] sticky top-0 z-40 border-b border-gray-100">
       {/* Search */}
       <div className="relative w-[35vw] opacity-0 pointer-events-none">
         <div className="absolute left-[1vw] top-1/2 -translate-y-1/2 text-gray-400">
@@ -30,8 +31,10 @@ const Navbar = () => {
           <IconSettings className="w-[1.3vw] h-[1.3vw]" />
         </div>
         <div className="flex items-center gap-[0.5vw] cursor-pointer hover:text-red-500 rounded-lg transition-colors">
+          <Link to='/login' className="flex align-center justify-center gap-[.5vw]">
           <IconLogout className="w-[1.3vw] h-[1.3vw]" />
           <span className="text-[1vw] font-medium hidden sm:block">Logout</span>
+          </Link>
         </div>
       </div>
     </header>
