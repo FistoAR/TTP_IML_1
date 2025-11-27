@@ -755,7 +755,7 @@ const Reports = () => {
         </div>
 
         {/* Content */}
-        <div className="p-[2vw]">
+        <div className="p-[1.5vw] max-h-[65vh] overflow-y-auto">
           {getFilteredProducts().map((productName) => {
             const sizes = getFilteredSizes(productName);
             return (

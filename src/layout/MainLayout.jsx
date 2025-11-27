@@ -15,7 +15,7 @@ const MainLayout = () => {
         <Navbar />
 
         {/* Main Content Area */}
-        <main id='mainContent' className="p-[1vw] overflow-auto">
+        <main id='mainContent' className="p-[1vw] overflow-hidden">
           {/* This component acts as the main page content */}
           {/* <DashboardContent /> */}
           <Outlet />
