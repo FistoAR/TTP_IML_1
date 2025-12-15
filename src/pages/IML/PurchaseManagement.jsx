@@ -812,7 +812,7 @@ const PurchaseManagement = () => {
                                 <div className="p-0">
                                   <table className="w-full border-collapse text-[0.85vw]">
                                     <thead>
-                                      <tr className="bg-gray-50">
+                                      <tr className="bg-gray-100">
                                         <th className="px-[0.9vw] py-[0.9vw] text-left border-b border-gray-200 text-gray-700 font-semibold text-[0.85vw]">
                                           S. No.
                                         </th>
@@ -875,7 +875,7 @@ const PurchaseManagement = () => {
                                         return (
                                           <tr
                                             key={entry.id}
-                                            className="hover:bg-gray-50"
+                                            className="bg-white"
                                           >
                                             <td className="px-4 py-3 whitespace-nowrap text-[.85vw] text-gray-900">
                                               {idx + 1}

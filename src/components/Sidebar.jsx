@@ -119,6 +119,10 @@ const Sidebar = () => {
   const isProduction =
     currentPath === "/iml/productionManagement" ||
     currentPath === "/iml/production-details";
+  
+    const isInventory =
+    currentPath === "/iml/inventoryManagement" ||
+    currentPath === "/iml/inventory-details";
   const isReports = currentPath === "/reports";
 
   useEffect(() => {
@@ -219,7 +223,9 @@ const Sidebar = () => {
               />
             </Link>
 
-            <SubMenuItem text="Stocks" icon={IconBox} isSelected={false} />
+            <Link to="/iml/inventoryManagement">
+              <SubMenuItem text="Inventory" icon={IconBox} isSelected={isInventory} />
+            </Link>
 
             <SubMenuItem
               text="Billings & Dispatch"

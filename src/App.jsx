@@ -10,6 +10,9 @@ import LoginPage from './pages/LoginPage'
 import PurchaseDetails from "./pages/IML/PurchaseDetails ";
 import PurchaseDetails2 from "./pages/IML/PurchaseDetails2";
 import ProductionManagement from "./pages/IML/ProductionManagement";
+import ProductionDetails from "./pages/IML/ProductionDetails";
+import InventoryManagement from "./pages/IML/InventoryManagement";
+import InventoryDetails from "./pages/IML/InventoryDetails";
 
 function App() {
   return (
@@ -29,6 +32,10 @@ function App() {
           <Route path="iml/purchase" element={<PurchaseDetails2 />} />
           {/* Production Management */}
           <Route path="iml/productionManagement" element={<ProductionManagement />} />
+          <Route path="iml/production-details" element={<ProductionDetails />} />
+          {/* Inventory Management */}
+          <Route path="iml/inventoryManagement" element={<InventoryManagement />} />
+          <Route path="iml/inventory-details" element={<InventoryDetails />} />
 
           {/* Reports */}
           <Route path="reports" element={<Reports />} />
