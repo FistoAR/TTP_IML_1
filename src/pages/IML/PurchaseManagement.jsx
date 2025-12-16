@@ -718,7 +718,7 @@ const PurchaseManagement = () => {
 
                   <div
                     onClick={() => toggleProduct(product)}
-                    className="px-[1vw] py-[0.5vw] bg-[#3d64bb] text-white text-[1.15vw] font-semibold cursor-pointer flex justify-between items-center transition-colors"
+                    className="px-[.85vw] py-[0.35vw] bg-[#3d64bb] text-white text-[1.15vw] font-semibold cursor-pointer flex justify-between items-center transition-colors"
                   >
                     <div className="flex items-center gap-[0.1vw] text-[1vw]">
                       <div className="w-[2.6vw] h-[2.6vw] bg-[#3d64bb] rounded-[0.5vw] flex items-center justify-center ">
@@ -772,7 +772,7 @@ const PurchaseManagement = () => {
 
                               <div
                                 onClick={() => toggleSize(product, size)}
-                                className="px-[1.2vw] py-[0.8vw] bg-gray-200 text-gray-900 text-[1vw] font-medium cursor-pointer flex justify-between items-center border border-gray-300 hover:bg-gray-200 transition-colors"
+                                className="px-[.95vw] py-[0.5vw] bg-gray-200 text-gray-900 text-[1vw] font-medium cursor-pointer flex justify-between items-center border border-gray-300 hover:bg-gray-200 transition-colors"
                               >
                                 <div className="flex items-center gap-[0.6vw] text-[0.95vw]">
                                   <div className="w-[2.2vw] h-[2.2vw] bg-[#333333] rounded-[0.45vw] flex items-center justify-center ">

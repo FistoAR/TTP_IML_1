@@ -112,17 +112,24 @@ const Sidebar = () => {
   const isOrdersActive = currentPath.startsWith("/iml");
   const isScreenPrintingActive = currentPath.startsWith("/screen");
 
+  // IML link boolean
   const isNewOrder = currentPath === "/iml/new-order";
-  const isPurchase =
-    currentPath === "/iml/purchaseManagement" ||
-    currentPath === "/iml/purchase-details";
-  const isProduction =
-    currentPath === "/iml/productionManagement" ||
-    currentPath === "/iml/production-details";
-  
-    const isInventory =
-    currentPath === "/iml/inventoryManagement" ||
-    currentPath === "/iml/inventory-details";
+
+  const isPurchase = currentPath === "/iml/purchaseManagement" || currentPath === "/iml/purchase-details";
+
+  const isProduction = currentPath === "/iml/productionManagement" || currentPath === "/iml/production-details";
+
+  const isInventory = currentPath === "/iml/inventoryManagement" || currentPath === "/iml/inventory-details";
+
+  const isBilling = currentPath === "/iml/billingManagement" || currentPath === "/iml/billing-details";
+
+  const isDispatch = currentPath === "/iml/dispatchManagement" || currentPath === "/iml/dispatch-details";
+
+  // Screen Printing link boolean
+  const isScreenNewOrder = currentPath === "/screen-printing/orders" || currentPath === "screen-printing/order-details";
+  const isStocksCheck = currentPath === "/screen-printing/jobwork" || currentPath === "/screen-printing/jobwork-details";
+  const isScreenBillingDispatch = currentPath === "/screen-printing/dispatch" || currentPath === "/screen-printing/dispatch-details";
+
   const isReports = currentPath === "/reports";
 
   useEffect(() => {
@@ -227,11 +234,21 @@ const Sidebar = () => {
               <SubMenuItem text="Inventory" icon={IconBox} isSelected={isInventory} />
             </Link>
 
-            <SubMenuItem
-              text="Billings & Dispatch"
-              icon={IconDashboard}
-              isSelected={false}
-            />
+            <Link to="/iml/billingManagement">
+              <SubMenuItem
+                text="Billings"
+                icon={IconDashboard}
+                isSelected={isBilling}
+              />
+            </Link>
+
+            <Link to="/iml/dispatchManagement">
+              <SubMenuItem
+                text="Dispatch"
+                icon={IconDashboard}
+                isSelected={isDispatch}
+              />
+            </Link>
           </SmoothCollapse>
         </div>
 
@@ -247,23 +264,29 @@ const Sidebar = () => {
           />
 
           <SmoothCollapse isOpen={openMenu === "screenPrinting"}>
-            <SubMenuItem
-              text="New order"
-              icon={IconFilePlus}
-              isSelected={false}
-            />
+            <Link to="/screen-printing/orders">
+              <SubMenuItem
+                text="New order"
+                icon={IconFilePlus}
+                isSelected={isScreenNewOrder}
+              />
+            </Link>
 
-            <SubMenuItem
-              text="Stocks check"
-              icon={IconBox}
-              isSelected={false}
-            />
+            <Link to="/screen-printing/jobwork">
+                <SubMenuItem
+                  text="Stocks check"
+                  icon={IconBox}
+                  isSelected={isStocksCheck}
+                />
+            </Link>
 
-            <SubMenuItem
-              text="Billings & Dispatch"
-              icon={IconDashboard}
-              isSelected={false}
-            />
+            <Link to="/screen-printing/dispatch">
+              <SubMenuItem
+                text="Billings & Dispatch"
+                icon={IconDashboard}
+                isSelected={isScreenBillingDispatch}
+              />
+            </Link>
           </SmoothCollapse>
         </div>
 

@@ -1,19 +1,21 @@
-// InventoryManagement.jsx
+// DispatchManagement.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const STORAGE_KEY_INVENTORY = "iml_inventory_entries";
+const STORAGE_KEY_DISPATCH = "iml_dispatch_entries";
 
-// Dummy data (can be removed when you wire from real source)
-const dummyInventoryEntries = [
+// Dummy data
+const dummyDispatchEntries = [
   {
     id: 1,
-    date: "15/12/2025",
+    date: "16/12/2025",
     company: "Terra Tech Packs",
     product: "Round",
     size: "250ml",
-    qty: "26,500",
-    comments: "Ready for dispatch",
+    qty: "26,000",
+    invoiceNo: "INV-2025-001",
+    dispatchStatus: "Pending",
+    comments: "Urgent delivery",
   },
   {
     id: 2,
@@ -21,8 +23,10 @@ const dummyInventoryEntries = [
     company: "ABC Industries",
     product: "Rectangle",
     size: "500ml",
-    qty: "15,000",
-    comments: "Hold for QC",
+    qty: "14,800",
+    invoiceNo: "INV-2025-002",
+    dispatchStatus: "Dispatched",
+    comments: "Completed",
   },
   {
     id: 3,
@@ -30,8 +34,10 @@ const dummyInventoryEntries = [
     company: "Terra Tech Packs",
     product: "Sweet Box",
     size: "250gms",
-    qty: "10,000",
-    comments: "Festival stock",
+    qty: "9,950",
+    invoiceNo: "INV-2025-003",
+    dispatchStatus: "Pending",
+    comments: "Festival order",
   },
 ];
 
@@ -69,46 +75,47 @@ const ChevronUpIcon = ({ className = "" }) => (
   </svg>
 );
 
-const InventoryManagement = () => {
+const DispatchManagement = () => {
   const navigate = useNavigate();
 
-  const [inventoryEntries, setInventoryEntries] = useState([]);
+  const [dispatchEntries, setDispatchEntries] = useState([]);
   const [searchCompany, setSearchCompany] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
+  const [selectedDispatchStatus, setSelectedDispatchStatus] = useState("");
   const [expandedProducts, setExpandedProducts] = useState({});
   const [expandedSizes, setExpandedSizes] = useState({});
 
-  // Initialize data from localStorage or dummy
+  // Initialize data
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_INVENTORY);
+    const stored = localStorage.getItem(STORAGE_KEY_DISPATCH);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setInventoryEntries(parsed);
+          setDispatchEntries(parsed);
           return;
         }
       } catch {
-        // ignore parse error and fall back
+        // fallback
       }
     }
-    setInventoryEntries(dummyInventoryEntries);
+    setDispatchEntries(dummyDispatchEntries);
     localStorage.setItem(
-      STORAGE_KEY_INVENTORY,
-      JSON.stringify(dummyInventoryEntries)
+      STORAGE_KEY_DISPATCH,
+      JSON.stringify(dummyDispatchEntries)
     );
   }, []);
 
-  // Expand all products and first size by default
+  // Auto-expand
   useEffect(() => {
-    if (inventoryEntries.length === 0) return;
+    if (dispatchEntries.length === 0) return;
 
     const newExpandedProducts = {};
     const newExpandedSizes = {};
     const productGroups = {};
 
-    inventoryEntries.forEach((entry) => {
+    dispatchEntries.forEach((entry) => {
       const product = entry.product || "Uncategorized";
       if (!productGroups[product]) {
         productGroups[product] = new Set();
@@ -120,26 +127,25 @@ const InventoryManagement = () => {
       newExpandedProducts[product] = true;
       const sizes = Array.from(productGroups[product]).sort();
       if (sizes.length > 0) {
-        const firstSize = sizes[0];
-        newExpandedSizes[`${product}-${firstSize}`] = true;
+        newExpandedSizes[`${product}-${sizes[0]}`] = true;
       }
     });
 
     setExpandedProducts(newExpandedProducts);
     setExpandedSizes(newExpandedSizes);
-  }, [inventoryEntries]);
+  }, [dispatchEntries]);
 
-  // Persist entries if changed (and not dummy from elsewhere)
+  // Persist
   useEffect(() => {
-    if (inventoryEntries.length === 0) return;
+    if (dispatchEntries.length === 0) return;
     localStorage.setItem(
-      STORAGE_KEY_INVENTORY,
-      JSON.stringify(inventoryEntries)
+      STORAGE_KEY_DISPATCH,
+      JSON.stringify(dispatchEntries)
     );
-  }, [inventoryEntries]);
+  }, [dispatchEntries]);
 
   const openDetails = (entry) => {
-    navigate("/iml/inventory-details", {
+    navigate("/iml/dispatch-details", {
       state: { entry },
     });
   };
@@ -147,37 +153,46 @@ const InventoryManagement = () => {
   // Unique filters
   const uniqueProducts = useMemo(() => {
     const set = new Set();
-    inventoryEntries.forEach((e) => set.add(e.product || "Uncategorized"));
+    dispatchEntries.forEach((e) => set.add(e.product || "Uncategorized"));
     return Array.from(set).sort();
-  }, [inventoryEntries]);
+  }, [dispatchEntries]);
 
   const uniqueSizes = useMemo(() => {
     const set = new Set();
-    inventoryEntries.forEach((e) => {
+    dispatchEntries.forEach((e) => {
       if (!selectedProduct || e.product === selectedProduct) {
         set.add(e.size || "No Size");
       }
     });
     return Array.from(set).sort();
-  }, [inventoryEntries, selectedProduct]);
+  }, [dispatchEntries, selectedProduct]);
 
   // Filter entries
   const filteredEntries = useMemo(() => {
     const companyTerm = searchCompany.trim().toLowerCase();
 
-    return inventoryEntries.filter((entry) => {
+    return dispatchEntries.filter((entry) => {
       const matchesCompany =
         !companyTerm ||
         (entry.company || "").toLowerCase().includes(companyTerm);
       const matchesProduct =
         !selectedProduct || entry.product === selectedProduct;
       const matchesSize = !selectedSize || entry.size === selectedSize;
+      const matchesDispatch =
+        !selectedDispatchStatus ||
+        entry.dispatchStatus === selectedDispatchStatus;
 
-      return matchesCompany && matchesProduct && matchesSize;
+      return matchesCompany && matchesProduct && matchesSize && matchesDispatch;
     });
-  }, [inventoryEntries, searchCompany, selectedProduct, selectedSize]);
+  }, [
+    dispatchEntries,
+    searchCompany,
+    selectedProduct,
+    selectedSize,
+    selectedDispatchStatus,
+  ]);
 
-  // Group by product -> size
+  // Group
   const groupedEntries = useMemo(() => {
     const grouped = {};
     filteredEntries.forEach((entry) => {
@@ -199,8 +214,8 @@ const InventoryManagement = () => {
     const hasFilter =
       searchCompany.trim() ||
       selectedProduct ||
-      selectedSize;
-        
+      selectedSize; // ← include this
+  
     if (!hasFilter) return;
   
     const newExpandedProducts = {};
@@ -243,22 +258,57 @@ const InventoryManagement = () => {
     setSearchCompany("");
     setSelectedProduct("");
     setSelectedSize("");
+    setSelectedDispatchStatus("");
   };
+
+  // Stats
+  const stats = useMemo(() => {
+    const total = dispatchEntries.length;
+    const pending = dispatchEntries.filter(
+      (e) => e.dispatchStatus === "Pending"
+    ).length;
+    const dispatched = dispatchEntries.filter(
+      (e) => e.dispatchStatus === "Dispatched"
+    ).length;
+
+    return { total, pending, dispatched };
+  }, [dispatchEntries]);
 
   return (
     <div className="p-[1vw] font-sans bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-[1vw]">
         <h1 className="text-[1.6vw] text-gray-800 font-bold m-0">
-          Inventory Management
+          Dispatch Management
         </h1>
-        <span className="text-[.8vw] text-gray-600">
-          Final quantity for Billing & Dispatch
-        </span>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-[1vw] mb-[1vw]">
+        <div className="bg-white px-[.75vw] py-[.5vw] rounded-lg shadow-sm border border-gray-200">
+          <p className="text-[0.85vw] text-gray-600 mb-[0.3vw]">
+            Total Dispatch Orders
+          </p>
+          <p className="text-[1.8vw] font-bold text-gray-800">{stats.total}</p>
+        </div>
+        <div className="bg-white px-[.75vw] py-[.5vw] rounded-lg shadow-sm border border-gray-200">
+          <p className="text-[0.85vw] text-gray-600 mb-[0.3vw]">
+            Pending Dispatch
+          </p>
+          <p className="text-[1.8vw] font-bold text-orange-600">
+            {stats.pending}
+          </p>
+        </div>
+        <div className="bg-white px-[.75vw] py-[.5vw] rounded-lg shadow-sm border border-gray-200">
+          <p className="text-[0.85vw] text-gray-600 mb-[0.3vw]">Dispatched</p>
+          <p className="text-[1.8vw] font-bold text-green-600">
+            {stats.dispatched}
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-[1.2vw] mb-[1.25vw] flex-wrap bg-white px-[1vw] py-[1vw] rounded-lg shadow-sm border border-gray-200">
+      <div className="flex gap-[1.2vw] mb-[1vw] flex-wrap bg-white px-[1vw] py-[1vw] rounded-lg shadow-sm border border-gray-200">
         {/* Search by company */}
         <div className="flex-1 min-w-[15vw]">
           <label className="block mb-[0.5vw] text-[0.85vw] font-medium text-gray-700">
@@ -269,7 +319,7 @@ const InventoryManagement = () => {
             placeholder="Enter company name..."
             value={searchCompany}
             onChange={(e) => setSearchCompany(e.target.value)}
-            className="w-full px-[0.65vw] py-[0.5vw] text-[0.9vw] border border-gray-300 rounded-md outline-none focus:border-indigo-600 transition-colors"
+            className="w-full px-[0.75vw] py-[0.55vw] text-[0.8vw] border border-gray-300 rounded-md outline-none focus:border-indigo-600 transition-colors"
           />
         </div>
 
@@ -284,7 +334,7 @@ const InventoryManagement = () => {
               setSelectedProduct(e.target.value);
               setSelectedSize("");
             }}
-            className="w-full px-[0.65vw] py-[0.5vw] text-[0.9vw] border border-gray-300 rounded-md outline-none bg-white cursor-pointer"
+            className="w-full px-[0.75vw] py-[0.55vw] text-[0.8vw] border border-gray-300 rounded-md outline-none bg-white cursor-pointer"
           >
             <option value="">All Products</option>
             {uniqueProducts.map((prod) => (
@@ -303,7 +353,7 @@ const InventoryManagement = () => {
           <select
             value={selectedSize}
             onChange={(e) => setSelectedSize(e.target.value)}
-            className="w-full px-[0.65vw] py-[0.5vw] text-[0.9vw] border border-gray-300 rounded-md outline-none bg-white cursor-pointer"
+            className="w-full px-[0.75vw] py-[0.55vw] text-[0.8vw] border border-gray-300 rounded-md outline-none bg-white cursor-pointer"
           >
             <option value="">All Sizes</option>
             {uniqueSizes.map((sz) => (
@@ -314,11 +364,27 @@ const InventoryManagement = () => {
           </select>
         </div>
 
-        {/* Clear filters */}
+        {/* Filter by dispatch status */}
+        <div className="flex-1 min-w-[12vw]">
+          <label className="block mb-[0.5vw] text-[0.85vw] font-medium text-gray-700">
+            Dispatch Status
+          </label>
+          <select
+            value={selectedDispatchStatus}
+            onChange={(e) => setSelectedDispatchStatus(e.target.value)}
+            className="w-full px-[0.75vw] py-[0.55vw] text-[0.8vw] border border-gray-300 rounded-md outline-none bg-white cursor-pointer"
+          >
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Dispatched">Dispatched</option>
+          </select>
+        </div>
+
+        {/* Clear */}
         <div className="flex-none self-end">
           <button
             onClick={clearFilters}
-            className="px-[1vw] py-[0.55vw] text-[0.9vw] bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors cursor-pointer"
+            className="px-[0.75vw] py-[0.55vw]  text-[0.9vw] bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors cursor-pointer"
           >
             Clear Filters
           </button>
@@ -329,12 +395,12 @@ const InventoryManagement = () => {
       {!hasEntries ? (
         <div className="bg-white p-[3vw] rounded-lg shadow-sm text-center">
           <p className="text-[1.1vw] text-gray-500 m-0">
-            No inventory entries found. Once inventory is counted, entries will
-            appear here.
+            No dispatch entries found. Once billing is completed, dispatch
+            orders will appear here.
           </p>
         </div>
       ) : (
-        <div className="max-h-[57vh] overflow-y-auto">
+        <div className="max-h-[43vh] overflow-y-auto">
           {Object.keys(groupedEntries)
             .sort()
             .map((product) => {
@@ -349,12 +415,12 @@ const InventoryManagement = () => {
                   {/* Product header */}
                   <div
                     onClick={() => toggleProduct(product)}
-                    className="px-[.85vw] py-[0.35vw] bg-[#3d64bb] text-white text-[1.15vw] font-semibold cursor-pointer flex justify-between items-center transition-colors"
+                    className="px-[1vw] py-[0.65vw] bg-[#059669] text-white text-[1vw] font-semibold cursor-pointer flex justify-between items-center transition-colors"
                   >
-                    <div className="flex items-center gap-[0.3vw]">
-                      <div className="w-[2.6vw] h-[2.6vw] flex items-center justify-center">
+                    <div className="flex items-center gap-[0.4vw]">
+                      <div className="w-[2vw] h-[2vw] flex items-center justify-center">
                         <svg
-                          className="w-[1.5vw] h-[1.5vw] text-white"
+                          className="w-[1.2vw] h-[1.2vw] text-white"
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
                           fill="none"
@@ -363,11 +429,14 @@ const InventoryManagement = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          <rect x="1" y="3" width="15" height="13" />
+                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                          <circle cx="5.5" cy="18.5" r="2.5" />
+                          <circle cx="18.5" cy="18.5" r="2.5" />
                         </svg>
                       </div>
-                      <span className="text-[0.9vw]">{product}</span>
-                      <span className="bg-white/20 px-[0.8vw] py-[0.2vw] rounded text-[0.8vw] font-medium ml-[0.15vw]">
+                      <span>{product}</span>
+                      <span className="bg-white/20 px-[0.8vw] py-[0.3vw] rounded text-[0.75vw] font-medium ml-[-0.15vw]">
                         {Object.keys(sizeMap).length} Size
                         {Object.keys(sizeMap).length > 1 ? "s" : ""}
                       </span>
@@ -397,10 +466,10 @@ const InventoryManagement = () => {
                               {/* Size header */}
                               <div
                                 onClick={() => toggleSize(product, size)}
-                                className="px-[.95vw] py-[0.45vw] bg-gray-200 text-gray-900 text-[1vw] font-medium cursor-pointer flex justify-between items-center border border-gray-300 hover:bg-gray-200 transition-colors"
+                                className="px-[1vw] py-[0.7vw] bg-gray-200 text-gray-900 text-[0.95vw] font-medium cursor-pointer flex justify-between items-center border border-gray-300 hover:bg-gray-300 transition-colors"
                               >
                                 <div className="flex items-center gap-[0.6vw] text-[0.95vw]">
-                                  <div className="w-[2.2vw] h-[2.2vw] bg-[#333333] rounded-[0.45vw] flex items-center justify-center">
+                                  <div className="w-[1.9vw] h-[1.75vw] bg-[#333333] rounded-[0.45vw] flex items-center justify-center">
                                     <svg
                                       className="w-[1vw] h-[1vw] text-white"
                                       xmlns="http://www.w3.org/2000/svg"
@@ -416,8 +485,8 @@ const InventoryManagement = () => {
                                   </div>
                                   <span>{size}</span>
                                   <span className="bg-white text-gray-900 px-[0.7vw] py-[0.25vw] rounded text-[0.75vw] font-medium">
-                                    {entries.length} Entry
-                                    {entries.length > 1 ? "ies" : ""}
+                                    {entries.length} Order
+                                    {entries.length > 1 ? "s" : ""}
                                   </span>
                                 </div>
                                 {isSizeExpanded ? (
@@ -427,28 +496,31 @@ const InventoryManagement = () => {
                                 )}
                               </div>
 
-                              {/* Entries table */}
+                              {/* Table */}
                               {isSizeExpanded && (
-                                <div className="p-[0.25vw]">
+                                <div>
                                   <table className="w-full border-collapse text-[0.85vw]">
                                     <thead>
                                       <tr className="bg-gray-50">
-                                        <th className="px-[0.8vw] py-[0.6vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
+                                        <th className="px-[0.9vw] py-[0.65vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
                                           S. No.
                                         </th>
-                                        <th className="px-[0.8vw] py-[0.6vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
+                                        <th className="px-[0.9vw] py-[0.65vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
                                           Date
                                         </th>
-                                        <th className="px-[0.8vw] py-[0.6vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
+                                        <th className="px-[0.9vw] py-[0.65vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
                                           Company
                                         </th>
-                                        <th className="px-[0.8vw] py-[0.6vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
+                                        <th className="px-[0.9vw] py-[0.65vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
                                           Quantity
                                         </th>
-                                        <th className="px-[0.8vw] py-[0.6vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
-                                          Comments
+                                        <th className="px-[0.9vw] py-[0.65vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
+                                          Invoice No
                                         </th>
-                                        <th className="px-[0.8vw] py-[0.6vw] text-center border-b border-gray-200 text-gray-700 font-semibold">
+                                        <th className="px-[0.9vw] py-[0.65vw] text-left border-b border-gray-200 text-gray-700 font-semibold">
+                                          Dispatch Status
+                                        </th>
+                                        <th className="px-[0.9vw] py-[0.65vw] text-center border-b border-gray-200 text-gray-700 font-semibold">
                                           Actions
                                         </th>
                                       </tr>
@@ -457,29 +529,41 @@ const InventoryManagement = () => {
                                       {entries.map((entry, idx) => (
                                         <tr
                                           key={entry.id}
-                                          className="hover:bg-gray-50"
+                                          className="bg-white hover:bg-gray-50"
                                         >
-                                          <td className="px-[0.8vw] py-[0.6vw] border-b border-gray-100 text-gray-900">
+                                          <td className="px-[0.9vw] py-[0.6vw] border-b border-gray-100 text-gray-900">
                                             {idx + 1}
                                           </td>
-                                          <td className="px-[0.8vw] py-[0.6vw] border-b border-gray-100 text-gray-900">
+                                          <td className="px-[0.9vw] py-[0.6vw] border-b border-gray-100 text-gray-900">
                                             {entry.date || "-"}
                                           </td>
-                                          <td className="px-[0.8vw] py-[0.6vw] border-b border-gray-100 text-gray-900">
+                                          <td className="px-[0.9vw] py-[0.6vw] border-b border-gray-100 text-gray-900 font-medium">
                                             {entry.company || "-"}
                                           </td>
-                                          <td className="px-[0.8vw] py-[0.6vw] border-b border-gray-100 text-gray-900 font-medium">
+                                          <td className="px-[0.9vw] py-[0.6vw] border-b border-gray-100 text-gray-900">
                                             {entry.qty || "-"}
                                           </td>
-                                          <td className="px-[0.8vw] py-[0.6vw] border-b border-gray-100 text-gray-900">
-                                            {entry.comments || "-"}
+                                          <td className="px-[0.9vw] py-[0.6vw] border-b border-gray-100 text-gray-900 font-medium">
+                                            {entry.invoiceNo || "-"}
                                           </td>
-                                          <td className="px-[0.8vw] py-[0.6vw] border-b border-gray-100 text-center">
+                                          <td className="px-[0.9vw] py-[0.6vw] border-b border-gray-100">
+                                            <span
+                                              className={`px-[0.6vw] py-[0.25vw] rounded-full text-[0.75vw] font-medium ${
+                                                entry.dispatchStatus ===
+                                                "Dispatched"
+                                                  ? "bg-green-100 text-green-700"
+                                                  : "bg-orange-100 text-orange-700"
+                                              }`}
+                                            >
+                                              {entry.dispatchStatus || "-"}
+                                            </span>
+                                          </td>
+                                          <td className="px-[0.9vw] py-[0.6vw] border-b border-gray-100 text-center">
                                             <button
                                               onClick={() => openDetails(entry)}
-                                              className="px-[1.2vw] py-[0.45vw] text-[0.8vw] border border-blue-600 text-blue-600 rounded-full font-bold hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
+                                              className="px-[1.2vw] py-[0.45vw] text-[0.8vw] border border-green-600 text-green-600 rounded-full font-bold hover:bg-green-600 hover:text-white transition-colors cursor-pointer"
                                             >
-                                              Verify & Send
+                                              Create Dispatch
                                             </button>
                                           </td>
                                         </tr>
@@ -502,4 +586,4 @@ const InventoryManagement = () => {
   );
 };
 
-export default InventoryManagement;
+export default DispatchManagement;

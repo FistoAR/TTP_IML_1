@@ -99,13 +99,13 @@ const InventoryDetails = () => {
     <div className="p-[1vw] font-sans bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-[1vw]">
-        <h1 className="text-[1.75vw] text-gray-800 font-bold m-0">
+        <h1 className="text-[1.6vw] text-gray-800 font-bold m-0">
           Inventory Verification
         </h1>
 
         <button
           onClick={handleBack}
-          className="flex items-center gap-[0.4vw] px-[1.25vw] py-[0.7vw] text-[0.9vw] bg-gray-600 text-white rounded-md font-medium hover:bg-gray-700 transition-colors cursor-pointer"
+          className="flex items-center gap-[0.4vw] px-[1vw] py-[0.4vw] text-[0.8vw] bg-gray-600 text-white rounded-md font-medium hover:bg-gray-700 transition-colors cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -124,7 +124,7 @@ const InventoryDetails = () => {
       </div>
 
       {/* Verification Form */}
-      <div className="bg-white p-[1vw] rounded-lg shadow-sm border border-gray-200 mb-[1.5vw]">
+      <div className="bg-white p-[1vw] rounded-lg shadow-sm border border-gray-200 mb-[1vw]">
         <div className="grid grid-cols-4 gap-[1vw] mb-[1vw]">
           {/* Company */}
           <div>
@@ -136,7 +136,7 @@ const InventoryDetails = () => {
               name="company"
               value={form.company}
               disabled
-              className="w-full px-[0.7vw] py-[0.7vw] text-[0.9vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+              className="w-full px-[0.7vw] py-[0.6vw] text-[0.85vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
             />
           </div>
 
@@ -150,7 +150,7 @@ const InventoryDetails = () => {
               name="product"
               value={form.product}
               disabled
-              className="w-full px-[0.7vw] py-[0.7vw] text-[0.9vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+              className="w-full px-[0.7vw] py-[0.6vw] text-[0.85vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
             />
           </div>
 
@@ -164,7 +164,7 @@ const InventoryDetails = () => {
               name="size"
               value={form.size}
               disabled
-              className="w-full px-[0.7vw] py-[0.7vw] text-[0.9vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+              className="w-full px-[0.7vw] py-[0.6vw] text-[0.85vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
             />
           </div>
 
@@ -178,7 +178,7 @@ const InventoryDetails = () => {
               name="countedQty"
               value={form.countedQty}
               disabled
-              className="w-full px-[0.7vw] py-[0.7vw] text-[0.9vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+              className="w-full px-[0.7vw] py-[0.6vw] text-[0.85vw] border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
             />
           </div>
         </div>
@@ -196,7 +196,7 @@ const InventoryDetails = () => {
                 value={form.finalQty}
                 onChange={handleChange}
                 placeholder="Enter final quantity"
-                className="w-full px-[0.7vw] py-[0.7vw] text-[0.9vw] border border-gray-300 rounded-md outline-none focus:border-blue-600 transition-colors"
+                className="w-full px-[0.7vw] py-[0.6vw] text-[0.85vw] border border-gray-300 rounded-md outline-none focus:border-blue-600 transition-colors"
               />
             </div>
 
@@ -210,7 +210,7 @@ const InventoryDetails = () => {
                 value={form.remarks}
                 onChange={handleChange}
                 placeholder="Enter remarks for Billing / Dispatch"
-                className="w-full px-[0.7vw] py-[0.7vw] text-[0.9vw] border border-gray-300 rounded-md outline-none focus:border-blue-600 transition-colors"
+                className="w-full px-[0.7vw] py-[0.6vw] text-[0.85vw] border border-gray-300 rounded-md outline-none focus:border-blue-600 transition-colors"
               />
             </div>
 
@@ -220,7 +220,7 @@ const InventoryDetails = () => {
               </label>
               <button
                 onClick={addFollowup}
-                className="px-[1.2vw] py-[0.7vw] text-[0.9vw] bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors cursor-pointer"
+                className="px-[1vw] py-[0.6vw] text-[0.85vw] bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors cursor-pointer"
               >
                 Send to Billing
               </button>
@@ -230,7 +230,7 @@ const InventoryDetails = () => {
       </div>
 
       {/* History */}
-      <div className="bg-white p-[1vw] rounded-lg shadow-sm border border-gray-200 mb-[1.5vw]">
+      <div className="bg-white p-[1vw] rounded-lg shadow-sm border border-gray-200 mb-[1vw]">
         <h3 className="text-[1.2vw] font-semibold text-gray-800 mb-[1vw]">
           Dispatch Instruction History
         </h3>
@@ -241,9 +241,9 @@ const InventoryDetails = () => {
             here.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[25vh]">
             <table className="w-full border-collapse text-[0.85vw]">
-              <thead>
+              <thead className="sticky top-0 left-0">
                 <tr className="bg-gray-100">
                   <th className="px-[0.9vw] py-[0.9vw] text-left border border-gray-300 text-gray-700 font-semibold">
                     Date
@@ -257,7 +257,7 @@ const InventoryDetails = () => {
                 </tr>
               </thead>
               <tbody>
-                {followups.map((f, idx) => (
+                {[...followups].reverse().map((f, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
                     <td className="px-[0.9vw] py-[0.9vw] border border-gray-300 text-gray-900">
                       {f.date}

@@ -1,18 +1,35 @@
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import NewOrder from "./pages/IML/NewOrder";
+import ScrollToTop from "./ScrollToTop";
+import LoginPage from './pages/LoginPage';
+
+// IML PAGES IMPORT
 import OrdersManagement from "./pages/IML/OrdersManagement";
 import OrdersManagement2 from "./pages/IML/OrdersManagement2";
 import PurchaseManagement from "./pages/IML/PurchaseManagement";
-import Reports from "./pages/Reports";
-import ScrollToTop from "./ScrollToTop";
-import LoginPage from './pages/LoginPage'
 import PurchaseDetails from "./pages/IML/PurchaseDetails ";
 import PurchaseDetails2 from "./pages/IML/PurchaseDetails2";
 import ProductionManagement from "./pages/IML/ProductionManagement";
 import ProductionDetails from "./pages/IML/ProductionDetails";
 import InventoryManagement from "./pages/IML/InventoryManagement";
 import InventoryDetails from "./pages/IML/InventoryDetails";
+import BillingManagement from "./pages/IML/BillingManagement";
+import BillingDetails from "./pages/IML/BillingDetails";
+import DispatchManagement from "./pages/IML/DispatchManagement";
+import DispatchDetails from "./pages/IML/DispatchDetails";
+
+// SCREEN PRINTING PAGES IMPORT
+import ScreenPrintingOrders from "./pages/ScreenPrinting/ScreenPrintingOrders";
+import ScreenPrintingOrderDetails from "./pages/ScreenPrinting/ScreenPrintingOrderDetails";
+import ScreenPrintingJobWork from "./pages/ScreenPrinting/ScreenPrintingJobWork";
+import ScreenPrintingJobWorkDetails from "./pages/ScreenPrinting/ScreenPrintingJobWorkDetails";
+import ScreenPrintingDispatch from "./pages/ScreenPrinting/ScreenPrintingDispatch";
+import ScreenPrintingDispatchDetails from "./pages/ScreenPrinting/ScreenPrintingDispatchDetails";
+
+
+// REPORTS
+import Reports from "./pages/Reports";
 
 function App() {
   return (
@@ -22,7 +39,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           
-          {/* IML → New Order */}
+          {/* IML Routes */}
           {/* New order management */}
           <Route path="iml/new-order" element={<OrdersManagement2 />} />
           <Route path="iml/new-order2" element={<OrdersManagement />} />
@@ -36,6 +53,22 @@ function App() {
           {/* Inventory Management */}
           <Route path="iml/inventoryManagement" element={<InventoryManagement />} />
           <Route path="iml/inventory-details" element={<InventoryDetails />} />
+          {/* Billing Management */}
+          <Route path="iml/billingManagement" element={<BillingManagement />} />
+          <Route path="iml/billing-details" element={<BillingDetails />} />
+          {/* Dispatch Management */}
+          <Route path="iml/dispatchManagement" element={<DispatchManagement />} />
+          <Route path="iml/dispatch-details" element={<DispatchDetails />} />
+
+
+          {/* Screen Printing Routes */}
+          <Route path="screen-printing/orders" element={<ScreenPrintingOrders />} />
+          <Route path="screen-printing/order-details" element={<ScreenPrintingOrderDetails />} />
+          <Route path="screen-printing/jobwork" element={<ScreenPrintingJobWork />} />
+          <Route path="screen-printing/jobwork-details" element={<ScreenPrintingJobWorkDetails />} />
+          <Route path="screen-printing/dispatch" element={<ScreenPrintingDispatch />} />
+          <Route path="screen-printing/dispatch-details" element={<ScreenPrintingDispatchDetails />} />
+          
 
           {/* Reports */}
           <Route path="reports" element={<Reports />} />
