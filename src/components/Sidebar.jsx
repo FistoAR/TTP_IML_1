@@ -274,7 +274,7 @@ const Sidebar = () => {
 
             <Link to="/screen-printing/jobwork">
                 <SubMenuItem
-                  text="Stocks check"
+                  text="Screen Printing"
                   icon={IconBox}
                   isSelected={isStocksCheck}
                 />
@@ -282,7 +282,7 @@ const Sidebar = () => {
 
             <Link to="/screen-printing/dispatch">
               <SubMenuItem
-                text="Billings & Dispatch"
+                text="Dispatch Stocks"
                 icon={IconDashboard}
                 isSelected={isScreenBillingDispatch}
               />

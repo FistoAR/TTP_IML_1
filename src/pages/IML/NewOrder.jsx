@@ -1031,8 +1031,11 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
             )}
           </div>
 
+
+          {/* Design Selection Section */}
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-[0.6vw] border-2 border-purple-200 p-[1vw] mb-[0] relative">
           {/* Design Type Toggle - Conditional Display */}
-          <div className="flex justify-end gap-[0.8vw] mb-[1vw]">
+          <div className="flex justify-end gap-[0.8vw] mb-[1vw] absolute top-[1vw] right-[1vw]">
             {isFromSuggestion && (
               <button
                 onClick={() =>
@@ -1060,9 +1063,6 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
               New Design
             </button>
           </div>
-
-          {/* Design Selection Section */}
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-[0.6vw] border-2 border-purple-200 p-[1vw] mb-[0]">
             <h3 className="text-[1vw] font-semibold text-purple-900 mb-[1vw]">
               Design Selection
             </h3>
@@ -2561,7 +2561,7 @@ function Section({ title, children, onClick, isCollapsed }) {
       >
         {title}
       </div>
-      <div className="bg-gray-50 p-[1.25vw] rounded-b-[0.6vw] border border-gray-200 border-t-0">
+      <div className="bg-gray-50 p-[1.25vw] rounded-b-[0.6vw] border border-gray-300 border-t-0">
         {children}
       </div>
     </div>

@@ -505,7 +505,7 @@ export default function OrdersManagement2() {
       <div className="mb-[1.25vw]">
         <div className="flex justify-between items-center mb-[.25vw]">
           <h1 className="text-[1.6vw] font-bold text-gray-900">
-            Orders Management
+            Orders Management (IML)
           </h1>
 
           <button
@@ -791,7 +791,7 @@ export default function OrdersManagement2() {
             )}
         </div>
       ) : (
-        <div className="space-y-[1.5vw] max-h-[38vh] overflow-y-auto">
+        <div className="space-y-[1.5vw] max-h-[41vh] overflow-y-auto">
           {Object.keys(PRODUCT_SIZE_OPTIONS)
             .filter((productName) => filteredGroupedOrders[productName])
             .map((productName) => {
@@ -939,7 +939,7 @@ export default function OrdersManagement2() {
                                           </th>
 
                                           <th className="px-[0.8vw] py-[0.7vw] text-left font-semibold text-gray-700">
-                                            Status
+                                            Artwork Status
                                           </th>
 
                                           <th className="px-[0.8vw] py-[0.7vw] text-left font-semibold text-gray-700">
