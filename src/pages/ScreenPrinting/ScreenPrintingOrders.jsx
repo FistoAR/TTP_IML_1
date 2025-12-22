@@ -275,10 +275,23 @@ export default function ScreenPrintingOrders() {
   // Handle form submission from NewOrder component
   const handleOrderSubmit = (orderData) => {
     if (editingOrder) {
+       const isValidDate = (date) => {
+        const d = new Date(date);
+        return d instanceof Date && !isNaN(d);
+      };
       // Update existing order
       const updatedOrders = orders.map((order) =>
         order.id === editingOrder.id
-          ? { ...orderData, id: editingOrder.id }
+          ? {
+            ...orderData,
+             ...orderData,
+             id: editingOrder.id,
+            createdAt: isValidDate(order.createdAt)
+              ? order.createdAt
+              : isValidDate(editingOrder.createdAt)
+              ? editingOrder.createdAt
+              : new Date().toISOString(),
+          }
           : order
       );
       setOrders(updatedOrders);
@@ -519,129 +532,7 @@ export default function ScreenPrintingOrders() {
       
       </div>
 
-      {/* Dashboard Stats Cards with SVG Icons */}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-[1vw]">
-        {/* Total Orders Card */}
-
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-[0.75vw] border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-blue-700 font-medium text-[.9vw]">
-              Total Orders
-            </span>
-
-            <div className="w-[2vw] h-[2vw] bg-[#3d64bb] rounded-[0.5vw] flex items-center justify-center">
-              <svg
-                className="w-[1.2vw] h-[1.2vw] text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <div className="text-[1.25vw] font-bold text-blue-900">
-            {stats.total}
-          </div>
-        </div>
-
-        {/* Pending Card */}
-
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-[0.75vw] border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-orange-700 font-medium text-[.9vw]">
-              Artwork Pending
-            </span>
-
-            <div className="w-[2vw] h-[2vw] bg-orange-500 rounded-[0.5vw] flex items-center justify-center">
-              <svg
-                className="w-[1.2vw] h-[1.2vw] text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <div className="text-[1.25vw] font-bold text-orange-900">
-            {stats.artworkPending}
-          </div>
-        </div>
-
-        {/* Completed Card */}
-
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-[0.75vw] border border-green-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-green-700 font-medium text-[.9vw]">
-              Artwork Approved
-            </span>
-
-            <div className="w-[2vw] h-[2vw] bg-green-500 rounded-[0.5vw] flex items-center justify-center">
-              <svg
-                className="w-[1.2vw] h-[1.2vw] text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <div className="text-[1.25vw] font-bold text-green-900">
-            {stats.artworkApproved}
-          </div>
-        </div>
-
-        {/* In Progress Card */}
-
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-[0.75vw] border border-yellow-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-yellow-700 font-medium text-[.9vw]">
-              Moved to Screen Printing
-            </span>
-
-            <div className="w-[2vw] h-[2vw] bg-yellow-500 rounded-[0.5vw] flex items-center justify-center">
-              <svg
-                className="w-[1.2vw] h-[1.2vw] text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <div className="text-[1.25vw] font-bold text-yellow-900">
-            {stats.movedToPurchase}
-          </div>
-        </div>
-      </div>
+     
 
       {/* Filters - UPDATED with proper width for size dropdown */}
 
@@ -789,7 +680,7 @@ export default function ScreenPrintingOrders() {
             )}
         </div>
       ) : (
-        <div className="space-y-[1.5vw] max-h-[41vh] overflow-y-auto">
+        <div className="space-y-[1.5vw] max-h-[60vh] overflow-y-auto">
           {Object.keys(PRODUCT_SIZE_OPTIONS)
             .filter((productName) => filteredGroupedOrders[productName])
             .map((productName) => {
@@ -925,6 +816,9 @@ export default function ScreenPrintingOrders() {
                                       <thead className="bg-gray-100 border-b border-gray-300">
                                         <tr>
                                           <th className="px-[0.8vw] py-[0.7vw] text-left font-semibold text-gray-700">
+                                            S. No.
+                                          </th>
+                                          <th className="px-[0.8vw] py-[0.7vw] text-left font-semibold text-gray-700">
                                             Company
                                           </th>
 
@@ -956,7 +850,7 @@ export default function ScreenPrintingOrders() {
 
                                       <tbody className="divide-y divide-gray-100 bg-white">
                                         {filterOrders(ordersList).map(
-                                          (order) => {
+                                          (order, index) => {
                                             const totalBudget =
                                               order.products?.reduce(
                                                 (sum, p) =>
@@ -970,6 +864,10 @@ export default function ScreenPrintingOrders() {
                                                 key={order.id}
                                                 className="hover:bg-gray-50 transition-colors"
                                               >
+                                                <td className="px-[0.8vw] py-[0.65vw] text-gray-900">
+                                                  {index + 1}
+                                                </td>
+                                                
                                                 <td className="px-[0.8vw] py-[0.65vw] font-medium text-gray-900">
                                                   {order.contact.company}
                                                 </td>
@@ -1082,7 +980,7 @@ export default function ScreenPrintingOrders() {
                                                     >
                                                       {order.products?.some((p) => p.moveToScreenPrinting === true)
                                                         ? "Purchase ✓"
-                                                        : "Move to Screen Printing"}
+                                                        : "Screen Printing →"}
                                                     </button>
                                                   </div>
                                                 </td>

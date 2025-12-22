@@ -283,30 +283,6 @@ const DispatchManagement = () => {
         </h1>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-[1vw] mb-[1vw]">
-        <div className="bg-white px-[.75vw] py-[.5vw] rounded-lg shadow-sm border border-gray-200">
-          <p className="text-[0.85vw] text-gray-600 mb-[0.3vw]">
-            Total Dispatch Orders
-          </p>
-          <p className="text-[1.8vw] font-bold text-gray-800">{stats.total}</p>
-        </div>
-        <div className="bg-white px-[.75vw] py-[.5vw] rounded-lg shadow-sm border border-gray-200">
-          <p className="text-[0.85vw] text-gray-600 mb-[0.3vw]">
-            Pending Dispatch
-          </p>
-          <p className="text-[1.8vw] font-bold text-orange-600">
-            {stats.pending}
-          </p>
-        </div>
-        <div className="bg-white px-[.75vw] py-[.5vw] rounded-lg shadow-sm border border-gray-200">
-          <p className="text-[0.85vw] text-gray-600 mb-[0.3vw]">Dispatched</p>
-          <p className="text-[1.8vw] font-bold text-green-600">
-            {stats.dispatched}
-          </p>
-        </div>
-      </div>
-
       {/* Filters */}
       <div className="flex gap-[1.2vw] mb-[1vw] flex-wrap bg-white px-[1vw] py-[1vw] rounded-lg shadow-sm border border-gray-200">
         {/* Search by company */}
@@ -400,7 +376,7 @@ const DispatchManagement = () => {
           </p>
         </div>
       ) : (
-        <div className="max-h-[43vh] overflow-y-auto">
+        <div className="max-h-[65vh] overflow-y-auto">
           {Object.keys(groupedEntries)
             .sort()
             .map((product) => {

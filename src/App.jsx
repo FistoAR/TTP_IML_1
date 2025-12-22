@@ -1,8 +1,11 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate  } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import NewOrder from "./pages/IML/NewOrder";
 import ScrollToTop from "./ScrollToTop";
 import LoginPage from './pages/LoginPage';
+
+// Overview
+import Overview from './pages/Overview'
 
 // IML PAGES IMPORT
 import OrdersManagement from "./pages/IML/OrdersManagement";
@@ -18,6 +21,7 @@ import BillingManagement from "./pages/IML/BillingManagement";
 import BillingDetails from "./pages/IML/BillingDetails";
 import DispatchManagement from "./pages/IML/DispatchManagement";
 import DispatchDetails from "./pages/IML/DispatchDetails";
+import IMLStocks from './pages/IML/Stocks';
 
 // SCREEN PRINTING PAGES IMPORT
 import ScreenPrintingOrders from "./pages/ScreenPrinting/ScreenPrintingOrders";
@@ -26,7 +30,11 @@ import ScreenPrintingJobWork from "./pages/ScreenPrinting/ScreenPrintingJobWork"
 import ScreenPrintingJobWorkDetails from "./pages/ScreenPrinting/ScreenPrintingJobWorkDetails";
 import ScreenPrintingDispatch from "./pages/ScreenPrinting/ScreenPrintingDispatch";
 import ScreenPrintingDispatchDetails from "./pages/ScreenPrinting/ScreenPrintingDispatchDetails";
+import ScreenPrintingStocks from './pages/ScreenPrinting/Stocks';
 
+
+// STOKC
+import Stock from "./pages/Stock";
 
 // REPORTS
 import Reports from "./pages/Reports";
@@ -38,6 +46,12 @@ function App() {
 
       <Routes>
         <Route path="/" element={<MainLayout />}>
+
+          {/* ✅ Default redirect */}
+          <Route index element={<Navigate to="iml/new-order" replace />} />
+
+          {/* Overview */}
+          <Route path='overview' element={<Overview />} />
           
           {/* IML Routes */}
           {/* New order management */}
@@ -59,6 +73,7 @@ function App() {
           {/* Dispatch Management */}
           <Route path="iml/dispatchManagement" element={<DispatchManagement />} />
           <Route path="iml/dispatch-details" element={<DispatchDetails />} />
+          <Route path="iml/stocks" element={<IMLStocks />} />
 
 
           {/* Screen Printing Routes */}
@@ -68,8 +83,11 @@ function App() {
           <Route path="screen-printing/jobwork-details" element={<ScreenPrintingJobWorkDetails />} />
           <Route path="screen-printing/dispatch" element={<ScreenPrintingDispatch />} />
           <Route path="screen-printing/dispatch-details" element={<ScreenPrintingDispatchDetails />} />
+          <Route path="screen-printing/stocks" element={<ScreenPrintingStocks />} />
           
 
+          {/* Stock - Plain box */}
+          <Route path="stock" element={<Stock />} />
           {/* Reports */}
           <Route path="reports" element={<Reports />} />
         </Route>

@@ -49,6 +49,13 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
     { id: 3, name: "Design 3", path: design3PDF, type: "pdf" },
   ];
 
+  const PRIORITY_OPTIONS = [
+  "Low (5-6 weeks)",
+  "Medium (4-5 weeks)",
+  "High (Less than 4 weeks)"
+];
+
+
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split("T")[0];
@@ -66,8 +73,8 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
       orderNumber: generateOrderNumber(),
       productName: "",
       size: "",
-      lidColor: { r: 255, g: 255, b: 255, a: 1 },
-      tubColor: { r: 255, g: 255, b: 255, a: 1 },
+      lidColor: 'transparent',
+      tubColor: 'white',
       imlType: "LID",
       // LID quantities
       lidLabelQty: "",
@@ -78,6 +85,8 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
       tubProductionQty: "",
       tubStock: 0,
       budget: 0,
+      estimatedNumber: 0,
+      estimatedValue: 0,
       // LID design
       lidDesignFile: null,
       lidSelectedOldDesign: null,
@@ -242,6 +251,8 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
       tubProductionQty: "",
       tubStock: 0,
       budget: 0,
+      estimatedNumber: 0,
+      estimatedValue: 0,
       lidDesignFile: null,
       lidSelectedOldDesign: null,
       tubDesignFile: null,
@@ -692,10 +703,10 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
                 label="Priority"
                 required
                 placeholder="Select Priority"
-                options={["Low", "Medium", "High"]}
-                value={contact.priority.charAt(0).toUpperCase() + contact.priority.slice(1)}
+                options={PRIORITY_OPTIONS}
+                value={contact.priority}
                 onChange={(e) =>
-                  setContact({ ...contact, priority: e.target.value.toLowerCase() })
+                  setContact({ ...contact, priority: e.target.value })
                 }
               />
             </div>
@@ -831,42 +842,28 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
 
             {/* Color Picker Section */}
             <div className="grid grid-cols-4 gap-[1.5vw] mt-[1vw]">
-              {(product.imlType === "LID" ||
-                product.imlType === "LID & TUB") && (
-                <RgbaColorPickerInput
-                  label="LID Color"
-                  value={product.lidColor}
-                  onChange={(color) =>
-                    updateProduct(product.id, "lidColor", color)
-                  }
-                  showPicker={product.showLidColorPicker}
-                  setShowPicker={(show) =>
-                    updateProduct(
-                      product.id,
-                      "showLidColorPicker",
-                      show
-                    )
-                  }
-                />
-              )}
-              {(product.imlType === "TUB" ||
-                product.imlType === "LID & TUB") && (
-                <RgbaColorPickerInput
-                  label="TUB Color"
-                  value={product.tubColor}
-                  onChange={(color) =>
-                    updateProduct(product.id, "tubColor", color)
-                  }
-                  showPicker={product.showTubColorPicker}
-                  setShowPicker={(show) =>
-                    updateProduct(
-                      product.id,
-                      "showTubColorPicker",
-                      show
-                    )
-                  }
-                />
-              )}
+             
+              <Input
+                label="LID Color"
+                required
+                placeholder=""
+                value={product.lidColor}
+                onChange={(e) => {
+                   updateProduct(product.id, "lidColor", e.target.value)
+                }}
+                disabled={false}
+              />
+            
+              <Input
+                label="TUB Color"
+                required
+                placeholder=""
+                value={product.tubColor}
+                onChange={(e) => {
+                  updateProduct(product.id, "tubColor", e.target.value)
+                }}
+                disabled={false}
+              />        
             </div>
 
             {/* UPDATED: Separate Quantity Details for LID & TUB */}
@@ -879,7 +876,7 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
                   </h4>
                   <div className="grid grid-cols-3 gap-[1.5vw]">
                     <Input
-                      label="Labels Qty (LID)"
+                      label="Labels Order Qty (LID)"
                       required
                       placeholder="Enter Label Quantity"
                       value={product.lidLabelQty}
@@ -924,7 +921,7 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
                   </h4>
                   <div className="grid grid-cols-3 gap-[1.5vw]">
                     <Input
-                      label="Labels Qty (TUB)"
+                      label="Labels Order Qty (TUB)"
                       required
                       placeholder="Enter Label Quantity"
                       value={product.tubLabelQty}
@@ -966,7 +963,7 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
               /* Single IML Type Quantities */
               <div className="grid grid-cols-4 gap-[1.5vw] mt-[1vw]">
                 <Input
-                  label={`Labels Qty${product.imlType !== "LID" && product.imlType !== "TUB" ? "" : ` (${product.imlType})`}`}
+                  label={`Labels Order Qty${product.imlType !== "LID" && product.imlType !== "TUB" ? "" : ` (${product.imlType})`}`}
                   required
                   placeholder="Enter Label Quantity"
                   value={product.imlType === "LID" ? product.lidLabelQty : product.tubLabelQty}
@@ -1003,32 +1000,34 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
                   onChange={(e) => {}}
                   disabled
                 />
-                <Input
-                  label="Budget (in Rs.)"
-                  required
-                  placeholder="Enter Budget"
-                  value={product.budget}
-                  onChange={(e) => {
-                    updateProduct(product.id, "budget", e.target.value);
-                  }}
-                />
+                
               </div>
             )}
 
-            {/* Budget for LID & TUB */}
-            {product.imlType === "LID & TUB" && (
-              <div className="grid grid-cols-4 gap-[1.5vw] mt-[1vw]">
-                <Input
-                  label="Budget (in Rs.)"
+           <div className="grid grid-cols-3 gap-[1.5vw] mt-[1vw]">
+
+              <Input
+                  label="Estimated Number"
                   required
-                  placeholder="Enter Budget"
-                  value={product.budget}
+                  placeholder="Enter Estimated Number"
+                  value={product.estimatedNumber}
                   onChange={(e) => {
-                    updateProduct(product.id, "budget", e.target.value);
+                    updateProduct(product.id, "estimatedNumber", e.target.value);
                   }}
+                  type="number"
                 />
-              </div>
-            )}
+              <Input
+                label="Estimated Value"
+                required
+                placeholder="Enter Estimated Value"
+                value={product.estimatedValue}
+                onChange={(e) => {
+                  updateProduct(product.id, "estimatedValue", e.target.value);
+                }}
+                type="number"
+              />
+           </div>
+
           </div>
 
 
@@ -1412,7 +1411,7 @@ export default function NewOrder({ existingOrder, onSubmit, onCancel, onBack }) 
           <div className="flex justify-end mt-[1vw]">
             <button
               onClick={addProduct}
-              className="px-[1vw] py-[0.5vw] bg-blue-600 text-white border-none rounded-[0.5vw] text-[0.85vw] font-medium cursor-pointer flex items-center gap-[0.6vw] transition-all duration-200 hover:bg-blue-700 shadow-md hover:shadow-lg"
+              className="px-[.8vw] py-[0.3vw] border border-[0.17vw] border-blue-600 bg-white text-blue-600 rounded-[0.5vw] text-[0.85vw] font-bold cursor-pointer flex items-center gap-[0.6vw] transition-all duration-200 hover:bg-blue-600 hover:text-white shadow-md hover:shadow-lg animate-pulse-scale"
             >
               <span className="text-[1.2vw]">+</span> Add Another Product
             </button>
@@ -2590,6 +2589,7 @@ function Input({
         onChange={onChange}
         onBlur={onBlur}
         disabled={disabled}
+        {...(type === "number" ? {min: "0"} : {})}
         className="w-full text-[.8vw] px-[0.75vw] py-[0.45vw] border border-gray-300 bg-white rounded-[0.5vw] text-[0.85vw] outline-none box-border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
       />
     </div>

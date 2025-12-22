@@ -40,3 +40,20 @@
 .read-the-docs {
   color: #888;
 }
+
+
+.animate-pulse-scale {
+  animation: scaleInOut 3s ease-in-out infinite;
+}
+
+@keyframes scaleInOut {
+  0% {
+    scale: .8;
+  }
+  50% {
+    scale: 1;
+  }
+  100% {
+    scale: .8;
+  }
+}

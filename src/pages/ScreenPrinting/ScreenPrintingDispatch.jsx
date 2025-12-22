@@ -30,6 +30,18 @@ const dummyDispatchEntries = [
     dispatchStatus: "Dispatched",
     comments: "Completed",
   },
+  {
+    id: 3,
+    date: "17/12/2025",
+    customer: "SDF Industries",
+    boxType: "sdfs Carton",
+    size: "500gs",
+    qtyToDispatch: 1600,
+    qtyDispatched: 1400,
+    invoiceNo: "SP-INV-335",
+    dispatchStatus: "Pending",
+    comments: "Not Completed",
+  },
 ];
 
 const ChevronDownIcon = ({ className = "" }) => (
@@ -239,33 +251,6 @@ const ScreenPrintingDispatch = () => {
         </h1>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-[1vw] mb-[1vw]">
-        <div className="bg-white px-[0.9vw] py-[0.6vw] rounded-lg shadow-sm border border-gray-200">
-          <p className="text-[0.85vw] text-gray-600 mb-[0.2vw]">
-            Total Dispatch Records
-          </p>
-          <p className="text-[1.7vw] font-bold text-gray-900">
-            {stats.total}
-          </p>
-        </div>
-        <div className="bg-white px-[0.9vw] py-[0.6vw] rounded-lg shadow-sm border border-gray-200">
-          <p className="text-[0.85vw] text-gray-600 mb-[0.2vw]">
-            Pending Dispatch
-          </p>
-          <p className="text-[1.7vw] font-bold text-orange-600">
-            {stats.pending}
-          </p>
-        </div>
-        <div className="bg-white px-[0.9vw] py-[0.6vw] rounded-lg shadow-sm border border-gray-200">
-          <p className="text-[0.85vw] text-gray-600 mb-[0.2vw]">
-            Dispatched
-          </p>
-          <p className="text-[1.7vw] font-bold text-green-600">
-            {stats.dispatched}
-          </p>
-        </div>
-      </div>
 
       {/* Filters */}
       <div className="flex gap-[1vw] mb-[1vw] flex-wrap bg-white px-[1vw] py-[1vw] rounded-lg shadow-sm border border-gray-200">
@@ -333,7 +318,7 @@ const ScreenPrintingDispatch = () => {
           </p>
         </div>
       ) : (
-        <div className="max-h-[45vh] overflow-y-auto">
+        <div className="max-h-[65vh] overflow-y-auto">
           {Object.keys(groupedEntries)
             .sort()
             .map((boxType) => {

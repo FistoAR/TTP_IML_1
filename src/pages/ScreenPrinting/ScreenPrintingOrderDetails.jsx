@@ -66,8 +66,8 @@ export default function ScreenPrintingOrderDetails({ existingOrder, onSubmit, on
       orderNumber: generateOrderNumber(),
       productName: "",
       size: "",
-      lidColor: { r: 255, g: 255, b: 255, a: 1 },
-      tubColor: { r: 255, g: 255, b: 255, a: 1 },
+      lidColor: 'transparent',
+      tubColor: 'white',
       imlType: "LID",
       // LID quantities
       lidLabelQty: "",
@@ -78,6 +78,9 @@ export default function ScreenPrintingOrderDetails({ existingOrder, onSubmit, on
       tubProductionQty: "",
       tubStock: 0,
       budget: 0,
+      estimatedNumber: 0,
+      estimatedValue: 0,
+      productQuantity: 0,
       // LID design
       lidDesignFile: null,
       lidSelectedOldDesign: null,
@@ -232,8 +235,8 @@ export default function ScreenPrintingOrderDetails({ existingOrder, onSubmit, on
       orderNumber: generateOrderNumber(),
       productName: "",
       size: "",
-      lidColor: { r: 255, g: 255, b: 255, a: 1 },
-      tubColor: { r: 255, g: 255, b: 255, a: 1 },
+      lidColor: 'transparent',
+      tubColor: 'white',
       imlType: "LID",
       lidLabelQty: "",
       lidProductionQty: "",
@@ -242,6 +245,9 @@ export default function ScreenPrintingOrderDetails({ existingOrder, onSubmit, on
       tubProductionQty: "",
       tubStock: 0,
       budget: 0,
+      estimatedNumber: 0,
+      estimatedValue: 0,
+      productQuantity: 0,
       lidDesignFile: null,
       lidSelectedOldDesign: null,
       tubDesignFile: null,
@@ -823,62 +829,45 @@ export default function ScreenPrintingOrderDetails({ existingOrder, onSubmit, on
 
             {/* Color Picker Section */}
             <div className="grid grid-cols-4 gap-[1.5vw] mt-[1vw]">
-              {(product.imlType === "LID" ||
-                product.imlType === "LID & TUB") && (
-                <RgbaColorPickerInput
-                  label="LID Color"
-                  value={product.lidColor}
-                  onChange={(color) =>
-                    updateProduct(product.id, "lidColor", color)
-                  }
-                  showPicker={product.showLidColorPicker}
-                  setShowPicker={(show) =>
-                    updateProduct(
-                      product.id,
-                      "showLidColorPicker",
-                      show
-                    )
-                  }
-                />
-              )}
-              {(product.imlType === "TUB" ||
-                product.imlType === "LID & TUB") && (
-                <RgbaColorPickerInput
-                  label="TUB Color"
-                  value={product.tubColor}
-                  onChange={(color) =>
-                    updateProduct(product.id, "tubColor", color)
-                  }
-                  showPicker={product.showTubColorPicker}
-                  setShowPicker={(show) =>
-                    updateProduct(
-                      product.id,
-                      "showTubColorPicker",
-                      show
-                    )
-                  }
-                />
-              )}
-
+             
               <Input
-                  label="Budget (in Rs.)"
-                  required
-                  placeholder="Enter Budget"
-                  value={product.budget}
-                  onChange={(e) => {
-                    updateProduct(product.id, "budget", e.target.value);
-                  }}
-                />
+                label="LID Color"
+                required
+                placeholder=""
+                value={product.lidColor}
+                onChange={(e) => {
+                   updateProduct(product.id, "lidColor", e.target.value)
+                }}
+                disabled={false}
+              />
+            
+              <Input
+                label="TUB Color"
+                required
+                placeholder=""
+                value={product.tubColor}
+                onChange={(e) => {
+                  updateProduct(product.id, "tubColor", e.target.value)
+                }}
+                disabled={false}
+              />
+             
+               
+              <Input
+                label="Quantity"
+                required
+                placeholder=""
+                value={product.productQuantity}
+                onChange={(e) => {
+                  updateProduct(product.id, "productQuantity", e.target.value)
+                }}
+                disabled={false}
+              />
+              
             </div>
 
           
 
-            {/* Budget for LID & TUB */}
-            {product.imlType === "LID & TUB" && (
-              <div className="grid grid-cols-4 gap-[1.5vw] mt-[1vw]">
-                
-              </div>
-            )}
           </div>
 
 

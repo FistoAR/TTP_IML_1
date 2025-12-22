@@ -109,6 +109,8 @@ const Sidebar = () => {
   const currentPath = location.pathname;
 
   // Active menu detection
+  const isOverviewActive = currentPath === '/overview';
+
   const isOrdersActive = currentPath.startsWith("/iml");
   const isScreenPrintingActive = currentPath.startsWith("/screen");
 
@@ -124,12 +126,15 @@ const Sidebar = () => {
   const isBilling = currentPath === "/iml/billingManagement" || currentPath === "/iml/billing-details";
 
   const isDispatch = currentPath === "/iml/dispatchManagement" || currentPath === "/iml/dispatch-details";
+  const isStocks = currentPath === "/iml/stocks";
 
   // Screen Printing link boolean
   const isScreenNewOrder = currentPath === "/screen-printing/orders" || currentPath === "screen-printing/order-details";
   const isStocksCheck = currentPath === "/screen-printing/jobwork" || currentPath === "/screen-printing/jobwork-details";
   const isScreenBillingDispatch = currentPath === "/screen-printing/dispatch" || currentPath === "/screen-printing/dispatch-details";
+  const isScreenStocks = currentPath === "/screen-printing/stocks";
 
+  const isPlainStocks = currentPath === "/stock";
   const isReports = currentPath === "/reports";
 
   useEffect(() => {
@@ -186,12 +191,14 @@ const Sidebar = () => {
         {/* Standard Item (Wrapper added for alignment consistency) */}
 
         <div className="px-[0.5vw]">
-          <MenuItem
-            icon={IconDashboard}
-            text="Overview"
-            isActive={false}
-            onClick={() => {}}
-          />
+          <Link to='/overview'>
+            <MenuItem
+              icon={IconDashboard}
+              text="Overview"
+              isActive={isOverviewActive}
+              onClick={() => {}}
+            />
+          </Link>
         </div>
 
         {/* --- IML / ORDERS SECTION --- */}
@@ -249,6 +256,14 @@ const Sidebar = () => {
                 isSelected={isDispatch}
               />
             </Link>
+
+            <Link to="/iml/stocks">
+              <SubMenuItem
+                text="Stocks"
+                icon={IconDashboard}
+                isSelected={isStocks}
+              />
+            </Link>
           </SmoothCollapse>
         </div>
 
@@ -282,15 +297,34 @@ const Sidebar = () => {
 
             <Link to="/screen-printing/dispatch">
               <SubMenuItem
-                text="Dispatch Stocks"
+                text="Dispatch"
                 icon={IconDashboard}
                 isSelected={isScreenBillingDispatch}
+              />
+            </Link>
+
+            <Link to="/screen-printing/stocks">
+              <SubMenuItem
+                text="Stocks"
+                icon={IconDashboard}
+                isSelected={isScreenStocks}
               />
             </Link>
           </SmoothCollapse>
         </div>
 
         {/* Standard Item */}
+
+        <div className="px-[0.5vw]">
+          <Link to="/stock">
+            <MenuItem
+              icon={IconDashboard}
+              text="Stocks"
+              isActive={isPlainStocks}
+              onClick={() => {}}
+            />
+          </Link>
+        </div>
 
         <div className="px-[0.5vw]">
           <Link to="/reports">

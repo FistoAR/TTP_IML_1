@@ -405,136 +405,6 @@ export default function ScreenPrintingJobWork() {
       </div>
 
       <div className="p-[.75vw]">
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-[1vw]" style={{ gap: "1vw" }}>
-        <div className="bg-white rounded-lg shadow-md" style={{ padding: ".75vw 1.25vw" }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600" style={{ fontSize: "0.85vw" }}>
-                Total Job Works
-              </p>
-              <p className="font-bold text-blue-600 " style={{ fontSize: "2vw" }}>
-                {stats.total}
-              </p>
-            </div>
-            <div
-              className="bg-blue-100 p-3 rounded-full"
-              style={{ padding: "0.8vw" }}
-            >
-              <svg
-                className="w-8 h-8 text-blue-600"
-                style={{ width: "2vw", height: "2vw" }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md" style={{ padding: ".75vw 1.25vw" }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 " style={{ fontSize: "0.85vw" }}>
-                Pending
-              </p>
-              <p className="font-bold text-orange-600" style={{ fontSize: "2vw" }}>
-                {stats.pending}
-              </p>
-            </div>
-            <div
-              className="bg-orange-100 p-3 rounded-full"
-              style={{ padding: "0.8vw" }}
-            >
-              <svg
-                className="w-8 h-8 text-orange-600"
-                style={{ width: "2vw", height: "2vw" }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md" style={{ padding: ".75vw 1.25vw" }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600" style={{ fontSize: "0.85vw" }}>
-                In Printing
-              </p>
-              <p className="font-bold text-yellow-600" style={{ fontSize: "2vw" }}>
-                {stats.inPrinting}
-              </p>
-            </div>
-            <div
-              className="bg-yellow-100 p-3 rounded-full"
-              style={{ padding: "0.8vw" }}
-            >
-              <svg
-                className="w-8 h-8 text-yellow-600"
-                style={{ width: "2vw", height: "2vw" }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md" style={{ padding: ".75vw 1.25vw" }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600" style={{ fontSize: "0.85vw" }}>
-                Completed
-              </p>
-              <p className="font-bold text-green-600" style={{ fontSize: "2vw" }}>
-                {stats.completed}
-              </p>
-            </div>
-            <div
-              className="bg-green-100 p-3 rounded-full"
-              style={{ padding: "0.8vw" }}
-            >
-              <svg
-                className="w-8 h-8 text-green-600"
-                style={{ width: "2vw", height: "2vw" }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md mb-[1vw]" style={{ padding: "1vw" }}>
@@ -642,7 +512,7 @@ export default function ScreenPrintingJobWork() {
             )}
           </div>
         ) : (
-          <div className="space-y-[.5vw] max-h-[30vh] overflow-y-auto">
+          <div className="space-y-[.5vw] max-h-[44vh] overflow-y-auto">
             {Object.entries(filteredGroupedJobWorks).map(([productName, sizes]) => (
               <div
                 key={productName}
