@@ -9,7 +9,7 @@ import Overview from './pages/Overview'
 
 // IML PAGES IMPORT
 import OrdersManagement from "./pages/IML/OrdersManagement";
-import OrdersManagement2 from "./pages/IML/OrdersManagement2";
+// import OrdersManagement2 from "./pages/IML/OrdersManagement2";
 import PurchaseManagement from "./pages/IML/PurchaseManagement";
 import PurchaseDetails from "./pages/IML/PurchaseDetails ";
 import PurchaseDetails2 from "./pages/IML/PurchaseDetails2";
@@ -55,8 +55,8 @@ function App() {
           
           {/* IML Routes */}
           {/* New order management */}
-          <Route path="iml/new-order" element={<OrdersManagement2 />} />
-          <Route path="iml/new-order2" element={<OrdersManagement />} />
+          <Route path="iml/new-order" element={<OrdersManagement />} />
+          {/* <Route path="iml/new-order2" element={<OrdersManagement />} /> */}
           {/* Purchase Management */}
           <Route path="iml/purchaseManagement" element={<PurchaseManagement />} />
           <Route path="iml/purchase-details" element={<PurchaseDetails />} />
