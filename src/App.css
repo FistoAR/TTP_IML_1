@@ -57,3 +57,7 @@
     scale: .8;
   }
 }
+
+select:disabled {
+  opacity: 1 !important;
+}

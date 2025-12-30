@@ -307,6 +307,17 @@ export default function NewOrder({
   };
 
   const submitForm = () => {
+    const unsavedProducts = products.filter(p => !p.isSaved);
+    
+    if (unsavedProducts.length > 0) {
+      const unsavedList = unsavedProducts
+        .map((p, index) => `${index + 1}. ${p.productName || 'Unnamed'} - ${p.size || 'No size'}`)
+        .join('\n');
+      
+      alert(`Please save all products before submitting the order:\n\n${unsavedList}\n\nClick "Save Product" button for each unsaved product.`);
+      return;
+    }
+
     const orderData = {
       contact,
       products,
@@ -549,6 +560,19 @@ export default function NewOrder({
   };
 
   const addPaymentRecord = () => {
+    const unsavedProducts = products.filter(p => 
+      selectedProducts.includes(p.id) && !p.isSaved
+    );
+  
+    if (unsavedProducts.length > 0) {
+      const unsavedList = unsavedProducts
+        .map(p => `${p.productName || 'Unnamed'} - ${p.size || 'No size'}`)
+        .join('\n');
+      
+      alert(`Please save the following products before recording payment:\n\n${unsavedList}`);
+      return;
+    }
+
     if (selectedProducts.length === 0) {
       alert("Please select at least one product");
       return;
@@ -606,20 +630,27 @@ export default function NewOrder({
       (sum, p) => sum + (parseFloat(p.budget) || 0),
       0
     );
+
     const totalPaid = paymentRecords
       .filter((r) => r.paymentType === "advance")
       .reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
     const productsWithPayment = new Set(
       paymentRecords.flatMap((r) => r.productIds)
     ).size;
+
     const productsWithoutPayment = products.length - productsWithPayment;
+
+    // Get total estimated amount from payment state
+    const totalEstimated = parseFloat(payment.totalEstimated) || 0;
 
     return {
       totalBudget,
       totalPaid,
+      totalEstimated, // ✅ ADD THIS
       productsWithPayment,
       productsWithoutPayment,
-      balance: totalBudget - totalPaid,
+      balance: Math.max(totalEstimated - totalPaid, 0), // ✅ FIXED - now uses totalEstimated
     };
   };
 
@@ -627,7 +658,7 @@ export default function NewOrder({
   const calculateSelectedTotal = () => {
     return selectedProducts.reduce((sum, id) => {
       const product = products.find((p) => p.id === id);
-      return sum + (parseFloat(product?.budget) || 0);
+      return sum + (parseFloat(product?.estimatedValue) || 0);
     }, 0);
   };
 
@@ -657,6 +688,23 @@ export default function NewOrder({
   const handleBack = () => {
     if (onBack) onBack();
   };
+
+  const [isManualTotal, setIsManualTotal] = useState(false);
+
+  // Auto-calculate only if not manually entered
+  useEffect(() => {
+    if (!isManualTotal) {
+      const totalEstimatedFromProducts = products.reduce(
+        (sum, p) => sum + (parseFloat(p.estimatedValue) || 0),
+        0
+      );
+
+      setPayment((prev) => ({
+        ...prev,
+        totalEstimated: totalEstimatedFromProducts.toFixed(2),
+      }));
+    }
+  }, [products, isManualTotal]);
 
   return (
     <div className="bg-gray-50 p-0">
@@ -1256,6 +1304,7 @@ export default function NewOrder({
                                             );
                                           }
                                         }}
+                                        disabled={product.isSaved}
                                         className="w-[0.9vw] h-[0.9vw] cursor-pointer"
                                       />
                                       <span className="text-[0.75vw] font-medium">
@@ -1281,6 +1330,7 @@ export default function NewOrder({
                                     e.target.value
                                   )
                                 }
+                                disabled={product.isSaved}
                                 className="w-full px-[1vw] py-[0.8vw] border border-gray-300 bg-white rounded-[0.5vw] text-[0.85vw] outline-none box-border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                               />
                             </div>
@@ -1517,17 +1567,6 @@ export default function NewOrder({
                       )}
                     </div>
 
-                    {products.length > 1 && (
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => removeProduct(product.id)}
-                          className="px-[2vw] py-[0.7vw] border border-red-500 text-red-500 bg-white rounded-[0.5vw] text-[0.85vw] cursor-pointer transition-all duration-200 hover:bg-red-50"
-                        >
-                          Remove Product
-                        </button>
-                      </div>
-                    )}
-
                     <div className="flex justify-end mt-[0.5vw]">
                       <button
                         onClick={() => handleSaveProduct(product.id)}
@@ -1541,6 +1580,17 @@ export default function NewOrder({
                         {product.isSaved ? "Product Saved ✓" : "Save Product"}
                       </button>
                     </div>
+
+                    {products.length > 1 && (
+                      <div className="flex justify-end mt-[0.75vw]">
+                        <button
+                          onClick={() => removeProduct(product.id)}
+                          className="px-[2vw] py-[0.7vw] border border-red-500 text-red-500 bg-white rounded-[0.5vw] text-[0.85vw] cursor-pointer transition-all duration-200 hover:bg-red-50"
+                        >
+                          Remove Product
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </Section>
@@ -1559,48 +1609,26 @@ export default function NewOrder({
           {/* Payment Details - UPDATED with Total Estimate for Selected */}
           <Section title="Payment Details - Client Payments">
             {/* Compact Summary Bar */}
-            <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-[0.5vw] p-[1vw] mb-[1.25vw]">
+            <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-[0.5vw] px-[.5vw] py-[.75vw] mb-[1.25vw] w-fit pr-[2vw]">
               <div className="flex items-center gap-[2vw]">
-                <div>
-                  <p className="text-[0.7vw] text-blue-600 font-medium">
-                    Total Products
-                  </p>
-                  <p className="text-[1.4vw] font-bold text-blue-700">
-                    {products.length}
-                  </p>
+                <div className="flex items-center gap-[0.25vw]">
+                  <div className="px-[2vw]">
+  <span className="text-[1vw] text-blue-600 font-medium">Total Products: </span>
+  <span className="text-[1.15vw] font-bold text-blue-700">{products.length}</span>
+</div>
+
+<div className="border-l-2 border-blue-300 px-[2vw]">
+  <span className="text-[1vw] text-green-600 font-medium">Payment Received: </span>
+  <span className="text-[1.15vw] font-bold text-green-700">{calculateTotals().productsWithPayment}</span>
+</div>
+
+<div className="border-l-2 border-blue-300 px-[2vw]">
+  <span className="text-[1vw] text-orange-600 font-medium">Pending: </span>
+  <span className="text-[1.15vw] font-bold text-orange-700">{calculateTotals().productsWithoutPayment}</span>
+</div>
+
                 </div>
-                <div className="border-l-2 border-blue-300 pl-[2vw]">
-                  <p className="text-[0.7vw] text-green-600 font-medium">
-                    Payment Received
-                  </p>
-                  <p className="text-[1.4vw] font-bold text-green-700">
-                    {calculateTotals().productsWithPayment}
-                  </p>
-                </div>
-                <div className="border-l-2 border-blue-300 pl-[2vw]">
-                  <p className="text-[0.7vw] text-orange-600 font-medium">
-                    Pending
-                  </p>
-                  <p className="text-[1.4vw] font-bold text-orange-700">
-                    {calculateTotals().productsWithoutPayment}
-                  </p>
-                </div>
-                <div className="border-l-2 border-blue-300 pl-[2vw]">
-                  <p className="text-[0.7vw] text-purple-600 font-medium">
-                    Total Amount
-                  </p>
-                  <p className="text-[1.4vw] font-bold text-purple-700">
-                    ₹{calculateTotals().totalBudget.toFixed(2)}
-                  </p>
-                </div>
-                <div className="border-l-2 border-blue-300 pl-[2vw]">
-                  <p className="text-[0.7vw] text-green-600 font-medium">
-                    Received
-                  </p>
-                  <p className="text-[1.4vw] font-bold text-green-700">
-                    ₹{calculateTotals().totalPaid.toFixed(2)}
-                  </p>
-                </div>
+                
               </div>
             </div>
 
@@ -1622,7 +1650,7 @@ export default function NewOrder({
                       className="w-[1vw] h-[1vw] cursor-pointer"
                     />
                     <span className="text-[0.85vw] font-semibold text-gray-700">
-                      Select Products ({selectedProducts.length} selected)
+                      Add Payment ({selectedProducts.length} selected)
                     </span>
                   </label>
                 </div>
@@ -1645,15 +1673,6 @@ export default function NewOrder({
                         }`}
                       >
                         <div className="flex items-center gap-[0.75vw]">
-                          <input
-                            type="checkbox"
-                            checked={selectedProducts.includes(product.id)}
-                            onChange={(e) =>
-                              handleProductSelect(product.id, e.target.checked)
-                            }
-                            disabled={isPaid}
-                            className="w-[0.9vw] h-[0.9vw] cursor-pointer disabled:cursor-not-allowed flex-shrink-0"
-                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-[0.5vw]">
                               <span className="text-[0.75vw] font-mono text-gray-600 truncate">
@@ -1665,15 +1684,16 @@ export default function NewOrder({
                                 </span>
                               )}
                             </div>
-                            <p className="text-[0.8vw] font-medium text-gray-800 truncate">
+                            <p className="text-[0.8vw] font-medium text-gray-800 truncate mt-[.25vw]">
                               {product.productName || "Not Selected"}{" "}
                               {product.size && `(${product.size})`}
+                              {!product.isSaved && <span className="text-[.7vw] text-red-600"> - Not Saved</span>}
                             </p>
-                            <div className="flex items-center justify-between mt-[0.25vw]">
+                            <div className="flex items-center justify-between mt-[0.35vw]">
                               <span className="text-[0.75vw] text-gray-600">
-                                Budget:{" "}
+                                Estimated Value:{" "}
                                 <span className="font-semibold text-gray-800">
-                                  ₹{product.budget || "0"}
+                                  ₹{product.estimatedValue || "0"}
                                 </span>
                               </span>
                               {isPaid && payment.paymentType === "advance" && (
@@ -2051,9 +2071,10 @@ export default function NewOrder({
                   type="number"
                   placeholder="₹ 0.00"
                   value={payment.totalEstimated}
-                  onChange={(e) =>
-                    setPayment({ ...payment, totalEstimated: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setPayment({ ...payment, totalEstimated: e.target.value });
+                    setIsManualTotal(true); // Mark as manually entered
+                  }}
                   className="w-full px-[0.75vw] py-[0.6vw] border border-gray-300 bg-white rounded-[0.4vw] text-[0.85vw] font-semibold outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
