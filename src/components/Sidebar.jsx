@@ -243,21 +243,27 @@ const Sidebar = () => {
 
             <Link to="/iml/billingManagement">
               <SubMenuItem
-                text="Billings"
+                text="Billings & Dispatch"
                 icon={IconDashboard}
                 isSelected={isBilling}
               />
             </Link>
-
+{/* 
             <Link to="/iml/dispatchManagement">
               <SubMenuItem
-                text="Dispatch & Stocks"
+                text="Dispatch"
                 icon={IconDashboard}
                 isSelected={isDispatch}
               />
-            </Link>
+            </Link> */}
 
-            
+            <Link to="/iml/stocks">
+              <SubMenuItem
+                text="Stocks"
+                icon={IconDashboard}
+                isSelected={isStocks}
+              />
+            </Link>
           </SmoothCollapse>
         </div>
 
@@ -291,13 +297,19 @@ const Sidebar = () => {
 
             <Link to="/screen-printing/dispatch">
               <SubMenuItem
-                text="Dispatch & Stocks"
+                text="Billing & Dispatch"
                 icon={IconDashboard}
                 isSelected={isScreenBillingDispatch}
               />
             </Link>
 
-           
+            <Link to="/screen-printing/stocks">
+              <SubMenuItem
+                text="Stocks"
+                icon={IconDashboard}
+                isSelected={isScreenStocks}
+              />
+            </Link>
           </SmoothCollapse>
         </div>
 

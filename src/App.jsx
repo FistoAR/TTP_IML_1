@@ -73,7 +73,7 @@ function App() {
           {/* Dispatch Management */}
           <Route path="iml/dispatchManagement" element={<DispatchManagement />} />
           <Route path="iml/dispatch-details" element={<DispatchDetails />} />
-          {/* <Route path="iml/stocks" element={<IMLStocks />} /> */}
+          <Route path="iml/stocks" element={<IMLStocks />} />
 
 
           {/* Screen Printing Routes */}
@@ -83,7 +83,7 @@ function App() {
           <Route path="screen-printing/jobwork-details" element={<ScreenPrintingJobWorkDetails />} />
           <Route path="screen-printing/dispatch" element={<ScreenPrintingDispatch />} />
           <Route path="screen-printing/dispatch-details" element={<ScreenPrintingDispatchDetails />} />
-          {/* <Route path="screen-printing/stocks" element={<ScreenPrintingStocks />} /> */}
+          <Route path="screen-printing/stocks" element={<ScreenPrintingStocks />} />
           
 
           {/* Stock - Plain box */}
