@@ -455,10 +455,10 @@ const SalesPayment = () => {
                         className="bg-gray-50 border border-gray-400 rounded-lg overflow-hidden"
                       >
                         {/* Order Header */}
-                        <div className="bg-gray-200 px-[1.5vw] py-[.85vw] flex justify-between items-center">
+                        <div className="bg-gray-200 px-[1.5vw] py-[.85vw] flex justify-between items-center cursor-pointer hover:bg-gray-300" onClick={() => toggleOrder(companyName, orderKey)}>
                           <div
-                            onClick={() => toggleOrder(companyName, orderKey)}
-                            className="flex items-center gap-4 flex-1 cursor-pointer hover:bg-gray-300 transition-all rounded p-[0.5vw]"
+                            
+                            className="flex items-center gap-4 flex-1 transition-all rounded p-[0.5vw]"
                           >
                             <svg
                               className={`w-[1.2vw] h-[1.2vw] transition-transform duration-200 text-gray-600 ${

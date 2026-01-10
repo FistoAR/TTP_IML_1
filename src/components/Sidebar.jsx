@@ -117,7 +117,7 @@ const Sidebar = () => {
   // IML link boolean
   const isNewOrder = currentPath === "/iml/new-order";
 
-  const isPurchase = currentPath === "/iml/purchaseManagement" || currentPath === "/iml/purchase-details" || currentPath === "/iml/purchase" || currentPath === "iml/purchase/label-quantity-sheet";
+  const isPurchase = currentPath === "/iml/purchaseManagement" || currentPath === "/iml/purchase-details" || currentPath === "/iml/purchase" || currentPath === "iml/purchase/label-quantity-sheet" || currentPath === "/iml/purchase/po-details" || currentPath === "/iml/purchase/label-quantity-sheet";
 
   const isProduction = currentPath === "/iml/productionManagement" || currentPath === "/iml/production-details" || currentPath === "/iml/production" || currentPath === "/iml/production/details";
 

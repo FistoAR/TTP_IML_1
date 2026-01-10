@@ -555,10 +555,10 @@ const ProductionManagement = () => {
                                               S.No
                                             </th>
                                             <th className="border border-gray-300 px-[0.75vw] py-[.6vw] text-left text-[.8vw] font-semibold">
-                                              IML Name
+                                              Company Name
                                             </th>
                                             <th className="border border-gray-300 px-[0.75vw] py-[.6vw] text-left text-[.8vw] font-semibold">
-                                              Company Name
+                                              IML Name
                                             </th>
                                             <th className="border border-gray-300 px-[0.75vw] py-[.6vw] text-left text-[.8vw] font-semibold">
                                               IML Type
@@ -567,7 +567,7 @@ const ProductionManagement = () => {
                                               Label Type
                                             </th>
                                             <th className="border border-gray-300 px-[0.75vw] py-[.6vw] text-center text-[.8vw] font-semibold">
-                                              Status
+                                              Production Status
                                             </th>
                                             <th className="border border-gray-300 px-[0.75vw] py-[.6vw] text-center text-[.8vw] font-semibold">
                                               Action
