@@ -766,7 +766,8 @@ const ProductionDetails = () => {
               disabled={productionEntries.length === 0}
               className="px-[1.5vw] py-[.6vw] bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-[0.6vw] font-semibold text-[0.9vw] hover:from-green-700 hover:to-emerald-700 transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              ✓ Submit Production
+              {formatNumber(remainingLabels) !== "0" ? "Save" : "✓ Submit Production"}
+              
             </button>
           </div>
         </div>

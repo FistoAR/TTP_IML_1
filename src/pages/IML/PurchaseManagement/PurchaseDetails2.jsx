@@ -10,6 +10,7 @@ const STORAGE_KEY_ORDERS = "imlorders";
 const STORAGE_KEY_TRACKING = "iml_tracking_followups";
 const STORAGE_KEY_LABEL = "iml_label_followups";
 const STORAGE_KEY_METADATA = "iml_purchase_metadata";
+const STORAGE_KEY_PO = "iml_purchase_po_details";
 
 const PurchaseManagement = () => {
   const navigate = useNavigate();
@@ -23,17 +24,33 @@ const PurchaseManagement = () => {
   const [activeSheet, setActiveSheet] = useState("po");
   const [expandedCompanies, setExpandedCompanies] = useState({});
   const [expandedOrders, setExpandedOrders] = useState({});
-  
+
   // NEW: Expanded state for label quantity sheet
   const [expandedCategories, setExpandedCategories] = useState({});
   const [expandedSizes, setExpandedSizes] = useState({});
 
   // Load orders that have been moved to purchase
+  const sortOrdersByLatestUpdate = (orders) => {
+    const storedPO = localStorage.getItem(STORAGE_KEY_PO);
+    const allPODetails = storedPO ? JSON.parse(storedPO) : {};
+
+    return [...orders].sort((a, b) => {
+      const aUpdated = allPODetails[a.id]?.updatedAt;
+      const bUpdated = allPODetails[b.id]?.updatedAt;
+
+      if (!aUpdated && !bUpdated) return 0;
+      if (!aUpdated) return 1;
+      if (!bUpdated) return -1;
+
+      return new Date(bUpdated) - new Date(aUpdated);
+    });
+  };
+
   const loadPurchaseOrders = () => {
     console.log("🔄 loadPurchaseOrders called");
-    
+
     const storedOrders = localStorage.getItem(STORAGE_KEY_ORDERS);
-    
+
     if (!storedOrders) {
       console.warn("⚠️ No orders in localStorage");
       setPurchaseOrders([]);
@@ -43,17 +60,20 @@ const PurchaseManagement = () => {
     try {
       const allOrders = JSON.parse(storedOrders);
       console.log("📦 Total orders found:", allOrders.length);
-      
+
       const purchaseOrders = allOrders.filter((order) => {
         if (!order.products || !Array.isArray(order.products)) {
           return false;
         }
-        
-        return order.products.some((product) => product.moveToPurchase === true);
+
+        return order.products.some(
+          (product) => product.moveToPurchase === true
+        );
       });
 
       console.log("✅ Purchase orders found:", purchaseOrders.length);
-      setPurchaseOrders(purchaseOrders);
+
+      setPurchaseOrders(sortOrdersByLatestUpdate(purchaseOrders));
     } catch (error) {
       console.error("❌ Error loading orders:", error);
       setPurchaseOrders([]);
@@ -63,7 +83,7 @@ const PurchaseManagement = () => {
   // Initial load
   useEffect(() => {
     console.log("🚀 PurchaseManagement mounted");
-    
+
     const storedVersion = localStorage.getItem(VERSION_KEY);
     if (storedVersion !== DATA_VERSION) {
       console.log("📦 Version update detected");
@@ -83,8 +103,9 @@ const PurchaseManagement = () => {
       loadPurchaseOrders();
     };
 
-    window.addEventListener('ordersUpdated', handleOrdersUpdate);
-    return () => window.removeEventListener('ordersUpdated', handleOrdersUpdate);
+    window.addEventListener("ordersUpdated", handleOrdersUpdate);
+    return () =>
+      window.removeEventListener("ordersUpdated", handleOrdersUpdate);
   }, []);
 
   // Reload when location state changes
@@ -105,10 +126,9 @@ const PurchaseManagement = () => {
 
       Object.entries(grouped).forEach(([companyName, orders]) => {
         newExpandedCompanies[companyName] = true;
-        const orderKeys = Object.keys(orders);
-        if (orderKeys.length > 0) {
-          newExpandedOrders[`${companyName}-${orderKeys[0]}`] = true;
-        }
+        Object.keys(orders).forEach((orderKey) => {
+          newExpandedOrders[`${companyName}-${orderKey}`] = true;
+        });
       });
 
       setExpandedCompanies(newExpandedCompanies);
@@ -116,32 +136,131 @@ const PurchaseManagement = () => {
     }
   }, [purchaseOrders, activeSheet]);
 
+  const groupLabelByCompanyOrder = () => {
+    const grouped = {};
+    purchaseOrders.forEach((order) => {
+      const companyName = order.contact?.company || "Unknown Company";
+      const orderNumber = order.orderNumber || "N/A";
+
+      if (!grouped[companyName]) grouped[companyName] = {};
+      if (!grouped[companyName][orderNumber])
+        grouped[companyName][orderNumber] = {
+          order,
+          products: [],
+        };
+
+      order.products
+        ?.filter((p) => p.moveToPurchase)
+        .forEach((product) => {
+          grouped[companyName][orderNumber].products.push(product);
+        });
+    });
+    return grouped;
+  };
+
+  const getFilteredLabelGroups = () => {
+    const allGrouped = groupLabelByCompanyOrder();
+    const filtered = {};
+
+    Object.entries(allGrouped).forEach(([companyName, orders]) => {
+      Object.entries(orders).forEach(([orderKey, { order, products }]) => {
+        // Base search
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch = !searchTerm
+          ? true
+          : companyName.toLowerCase().includes(searchLower) ||
+            order.contact.contactName.toLowerCase().includes(searchLower) ||
+            order.contact.phone.toLowerCase().includes(searchLower) ||
+            products.some((product) =>
+              product.imlName?.toLowerCase().includes(searchLower)
+            );
+
+        // Product filter
+        const matchesProduct = !selectedProduct
+          ? true
+          : products.some(
+              (p) => p.productName === selectedProduct && p.moveToPurchase
+            );
+
+        // Size filter
+        const matchesSize =
+          !selectedSize || !selectedProduct
+            ? true
+            : products.some(
+                (p) =>
+                  p.productName === selectedProduct &&
+                  p.size === selectedSize &&
+                  p.moveToPurchase
+              );
+
+        if (matchesSearch && matchesProduct && matchesSize) {
+          if (!filtered[companyName]) filtered[companyName] = {};
+          filtered[companyName][orderKey] = { order, products };
+        }
+      });
+    });
+
+    return filtered;
+  };
+
+  const groupByCompanyOrderProduct = () => {
+    const grouped = {};
+
+    purchaseOrders.forEach((order) => {
+      const companyName = order.contact?.company || "Unknown Company";
+      const orderNumber = order.orderNumber || "N/A";
+
+      if (!grouped[companyName]) {
+        grouped[companyName] = {};
+      }
+      if (!grouped[companyName][orderNumber]) {
+        grouped[companyName][orderNumber] = [];
+      }
+
+      order.products
+        ?.filter((p) => p.moveToPurchase)
+        .forEach((product) => {
+          grouped[companyName][orderNumber].push({
+            productId: product.id,
+            productName: product.productName,
+            size: product.size,
+            imlName: product.imlName,
+            imlType: product.imlType,
+            lidLabelQty: product.lidLabelQty,
+            tubLabelQty: product.tubLabelQty,
+          });
+        });
+    });
+
+    return grouped;
+  };
+
   // Auto-expand for Label sheet
   useEffect(() => {
     if (activeSheet === "label" && purchaseOrders.length > 0) {
-      const grouped = groupByProductCategory();
-      const newExpandedCategories = {};
-      const newExpandedSizes = {};
+      const grouped = groupLabelByCompanyOrder();
+      const newExpandedCompanies = {};
+      const newExpandedOrders = {};
 
-      Object.entries(grouped).forEach(([category, sizes]) => {
-        newExpandedCategories[category] = true;
-        Object.keys(sizes).forEach(size => {
-          newExpandedSizes[`${category}-${size}`] = true;
+      Object.entries(grouped).forEach(([companyName, orders]) => {
+        newExpandedCompanies[companyName] = true;
+        Object.keys(orders).forEach((orderNumber) => {
+          newExpandedOrders[`${companyName}-${orderNumber}`] = true;
         });
       });
 
-      setExpandedCategories(newExpandedCategories);
-      setExpandedSizes(newExpandedSizes);
+      setExpandedCompanies(newExpandedCompanies);
+      setExpandedOrders(newExpandedOrders);
     }
   }, [purchaseOrders, activeSheet]);
 
   useEffect(() => {
-  if (location.state?.activeSheet) {
-    setActiveSheet(location.state.activeSheet);
-    // Clear the state
-    window.history.replaceState({}, document.title);
-  }
-}, [location.state]);
+    if (location.state?.activeSheet) {
+      setActiveSheet(location.state.activeSheet);
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Group orders by company (for PO sheet)
   const groupOrdersByCompany = () => {
@@ -167,43 +286,45 @@ const PurchaseManagement = () => {
 
     purchaseOrders.forEach((order) => {
       const companyName = order.contact?.company || "Unknown Company";
-      
-      order.products?.filter(p => p.moveToPurchase).forEach((product) => {
-        const category = product.productName; // Rectangle, Round, etc.
-        const size = product.size;
 
-        if (!grouped[category]) {
-          grouped[category] = {};
-        }
-        if (!grouped[category][size]) {
-          grouped[category][size] = [];
-        }
+      order.products
+        ?.filter((p) => p.moveToPurchase)
+        .forEach((product) => {
+          const category = product.productName; // Rectangle, Round, etc.
+          const size = product.size;
 
-        // Check if company already exists for this category-size
-        const existingCompany = grouped[category][size].find(
-          item => item.companyName === companyName
-        );
+          if (!grouped[category]) {
+            grouped[category] = {};
+          }
+          if (!grouped[category][size]) {
+            grouped[category][size] = [];
+          }
 
-        if (!existingCompany) {
-          grouped[category][size].push({
-            companyName: companyName,
-            productCategory: category,
-            size: size,
-            orders: []
+          // Check if company already exists for this category-size
+          const existingCompany = grouped[category][size].find(
+            (item) => item.companyName === companyName
+          );
+
+          if (!existingCompany) {
+            grouped[category][size].push({
+              companyName: companyName,
+              productCategory: category,
+              size: size,
+              orders: [],
+            });
+          }
+
+          // Add order to company
+          const companyIndex = grouped[category][size].findIndex(
+            (item) => item.companyName === companyName
+          );
+
+          grouped[category][size][companyIndex].orders.push({
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            product: product,
           });
-        }
-
-        // Add order to company
-        const companyIndex = grouped[category][size].findIndex(
-          item => item.companyName === companyName
-        );
-        
-        grouped[category][size][companyIndex].orders.push({
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          product: product
         });
-      });
     });
 
     return grouped;
@@ -265,8 +386,7 @@ const PurchaseManagement = () => {
         if (selectedProduct) {
           matchesProduct = order.products?.some(
             (product) =>
-              product.moveToPurchase &&
-              product.productName === selectedProduct
+              product.moveToPurchase && product.productName === selectedProduct
           );
         }
 
@@ -310,9 +430,9 @@ const PurchaseManagement = () => {
         }
 
         // Apply search filter
-        const filteredCompanies = companies.filter(company => {
+        const filteredCompanies = companies.filter((company) => {
           if (!searchTerm) return true;
-          
+
           const searchLower = searchTerm.toLowerCase();
           return company.companyName.toLowerCase().includes(searchLower);
         });
@@ -377,8 +497,8 @@ const PurchaseManagement = () => {
       state: {
         companyName: companyName,
         productCategory: category,
-        size: size
-      }
+        size: size,
+      },
     });
   };
 
@@ -391,6 +511,40 @@ const PurchaseManagement = () => {
     }
   };
 
+  const getProductPOStatus = (orderId, productId) => {
+    const storedPO = localStorage.getItem(STORAGE_KEY_PO);
+    if (!storedPO) return "❌ Not Updated";
+
+    const allPODetails = JSON.parse(storedPO);
+    const orderPO = allPODetails[orderId];
+    if (!orderPO || !orderPO.products) return "❌ Not Updated";
+
+    const productDetails = orderPO.products[productId];
+    if (!productDetails) return "❌ Not Updated";
+
+    // Handle LID & TUB separately
+    if (productDetails.lid && productDetails.tub) {
+      const lidComplete =
+        productDetails.lid.poNumber &&
+        productDetails.lid.labelType &&
+        productDetails.lid.supplier;
+      const tubComplete =
+        productDetails.tub.poNumber &&
+        productDetails.tub.labelType &&
+        productDetails.tub.supplier;
+
+      return lidComplete && tubComplete ? "✅ Updated" : "⚠️ Incomplete";
+    }
+
+    // Normal product
+    const complete =
+      productDetails.poNumber &&
+      productDetails.labelType &&
+      productDetails.supplier;
+
+    return complete ? "✅ Updated" : "⚠️ Incomplete";
+  };
+
   // PO Sheet Rendering (Original)
   const renderPOSheet = () => {
     const filteredGroupedOrders = getFilteredGroupedOrders();
@@ -400,11 +554,23 @@ const PurchaseManagement = () => {
       return (
         <div className="bg-white rounded-xl shadow-sm p-[2vw] text-center border border-gray-200">
           <div className="w-[4vw] h-[4vw] bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-[0.8vw]">
-            <svg className="w-[2vw] h-[2vw] text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            <svg
+              className="w-[2vw] h-[2vw] text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Purchase Orders Found</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            No Purchase Orders Found
+          </h3>
           <p className="text-gray-600 mb-4">
             {searchTerm || selectedProduct || selectedSize
               ? "No orders match your filters"
@@ -417,7 +583,10 @@ const PurchaseManagement = () => {
     return (
       <div className="space-y-[1.5vw] max-h-[59vh] overflow-y-auto">
         {Object.entries(filteredGroupedOrders).map(([companyName, orders]) => (
-          <div key={companyName} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div
+            key={companyName}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+          >
             {/* Company Header */}
             <div
               onClick={() => toggleCompany(companyName)}
@@ -432,11 +601,18 @@ const PurchaseManagement = () => {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
                 <div>
                   <h3 className="text-[1.15vw] font-bold">{companyName}</h3>
-                  <p className="text-[.9vw] text-blue-100">{Object.keys(orders).length} Orders</p>
+                  <p className="text-[.9vw] text-blue-100">
+                    {Object.keys(orders).length} Orders
+                  </p>
                 </div>
               </div>
             </div>
@@ -445,11 +621,16 @@ const PurchaseManagement = () => {
             {expandedCompanies[companyName] && (
               <div className="space-y-[1.25vw] p-[1vw]">
                 {Object.entries(orders).map(([orderKey, order]) => {
-                  const isOrderExpanded = expandedOrders[`${companyName}-${orderKey}`];
-                  const purchaseProducts = order.products?.filter((p) => p.moveToPurchase) || [];
+                  const isOrderExpanded =
+                    expandedOrders[`${companyName}-${orderKey}`];
+                  const purchaseProducts =
+                    order.products?.filter((p) => p.moveToPurchase) || [];
 
                   return (
-                    <div key={orderKey} className="bg-gray-50 border border-gray-400 rounded-lg overflow-hidden">
+                    <div
+                      key={orderKey}
+                      className="bg-gray-50 border border-gray-400 rounded-lg overflow-hidden"
+                    >
                       {/* Order Header */}
                       <div
                         onClick={() => toggleOrder(companyName, orderKey)}
@@ -464,14 +645,29 @@ const PurchaseManagement = () => {
                             stroke="currentColor"
                             viewBox="0 0 24 24"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
                           </svg>
                           <div className="flex-1">
-                            <h4 className="text-[1.05vw] font-semibold text-gray-800">{orderKey}</h4>
+                            <h4 className="text-[1.05vw] font-semibold text-gray-800">
+                              {orderKey}
+                            </h4>
                             <div className="flex gap-6 mt-2 text-[.9vw] text-gray-600">
-                              <span><strong>Contact:</strong> {order.contact.contactName}</span>
-                              <span><strong>Phone:</strong> {order.contact.phone}</span>
-                              <span><strong>Products:</strong> {purchaseProducts.length}</span>
+                              <span>
+                                <strong>Contact:</strong>{" "}
+                                {order.contact.contactName}
+                              </span>
+                              <span>
+                                <strong>Phone:</strong> {order.contact.phone}
+                              </span>
+                              <span>
+                                <strong>Products:</strong>{" "}
+                                {purchaseProducts.length}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -494,32 +690,68 @@ const PurchaseManagement = () => {
                               <table className="w-full border-collapse">
                                 <thead>
                                   <tr className="bg-gray-200">
-                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">S.No</th>
-                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">Product</th>
-                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">Size</th>
-                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">IML Name</th>
-                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">Type</th>
-                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">Qty</th>
+                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                      S.No
+                                    </th>
+                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                      Product
+                                    </th>
+                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                      Size
+                                    </th>
+                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                      IML Name
+                                    </th>
+                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                      Type
+                                    </th>
+                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                      Qty
+                                    </th>
+                                    <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                      PO Status
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {purchaseProducts.map((product, idx) => {
-                                    const quantity = product.imlType.includes("LID") ? product.lidLabelQty : product.tubLabelQty;
+                                    const quantity = product.imlType.includes(
+                                      "LID"
+                                    )
+                                      ? product.lidLabelQty
+                                      : product.tubLabelQty;
 
                                     return (
-                                      <tr key={product.id || idx} className="hover:bg-gray-50">
-                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">{idx + 1}</td>
-                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw] font-medium">{product.productName || "N/A"}</td>
-                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">{product.size || "N/A"}</td>
+                                      <tr
+                                        key={product.id || idx}
+                                        className="hover:bg-gray-50"
+                                      >
                                         <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
-                                            {product.imlName || "N/A"}                                          
+                                          {idx + 1}
+                                        </td>
+                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw] font-medium">
+                                          {product.productName || "N/A"}
+                                        </td>
+                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
+                                          {product.size || "N/A"}
+                                        </td>
+                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
+                                          {product.imlName || "N/A"}
                                         </td>
                                         <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
                                           <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
                                             {product.imlType || "N/A"}
                                           </span>
                                         </td>
-                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw] font-semibold">{quantity || "0"}</td>
+                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw] font-semibold">
+                                          {quantity || "0"}
+                                        </td>
+                                        <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw] font-semibold">
+                                          {getProductPOStatus(
+                                            order.id,
+                                            product.id
+                                          )}
+                                        </td>
                                       </tr>
                                     );
                                   })}
@@ -527,7 +759,9 @@ const PurchaseManagement = () => {
                               </table>
                             </div>
                           ) : (
-                            <p className="text-center text-gray-500 py-[2vw]">No products moved to purchase</p>
+                            <p className="text-center text-gray-500 py-[2vw]">
+                              No products moved to purchase
+                            </p>
                           )}
                         </div>
                       )}
@@ -542,20 +776,55 @@ const PurchaseManagement = () => {
     );
   };
 
+
+  const handleOpenLabelQuantitySheetForOrder = (order) => {
+  navigate("/iml/purchase/label-quantity-sheet", {
+    state: {
+      orderId: order.id,
+      companyName: order.contact?.company,
+      // no productCategory or size here
+    },
+  });
+};
+
+// Case 2: Open LabelQuantitySheet for a specific product (preselected)
+const handleOpenLabelQuantitySheetForProduct = (order, product) => {
+  navigate("/iml/purchase/label-quantity-sheet", {
+    state: {
+      orderId: order.id,
+      companyName: order.contact?.company,
+      productCategory: product.productName,
+      size: product.size,
+    },
+  });
+};
+
   // NEW: Label Sheet Rendering
   const renderLabelSheet = () => {
-    const filteredCategoryGroups = getFilteredCategoryGroups();
-    const hasData = Object.keys(filteredCategoryGroups).length > 0;
+    const filteredLabelGroups = getFilteredLabelGroups();
+    const hasData = Object.keys(filteredLabelGroups).length > 0;
 
     if (!hasData) {
       return (
         <div className="bg-white rounded-xl shadow-sm p-[2vw] text-center border border-gray-200">
           <div className="w-[4vw] h-[4vw] bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-[0.8vw]">
-            <svg className="w-[2vw] h-[2vw] text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            <svg
+              className="w-[2vw] h-[2vw] text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+              />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Products Found</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            No Products Found
+          </h3>
           <p className="text-gray-600">
             {searchTerm || selectedProduct || selectedSize
               ? "No products match your filters"
@@ -567,104 +836,196 @@ const PurchaseManagement = () => {
 
     return (
       <div className="space-y-[1.5vw] max-h-[59vh] overflow-y-auto">
-        {Object.entries(filteredCategoryGroups).map(([category, sizes]) => (
-          <div key={category} className="bg-white rounded-lg shadow-sm border-2 border-purple-300 overflow-hidden">
-            {/* Category Header */}
+        {Object.entries(filteredLabelGroups).map(([companyName, orders]) => (
+          <div
+            key={companyName}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+          >
+            {/* Company Header */}
             <div
-              onClick={() => toggleCategory(category)}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 px-[1.5vw] py-[.85vw] cursor-pointer hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-4"
+              onClick={() => toggleCompany(companyName)}
+              className="bg-[#3d64bb] text-white px-[1.5vw] py-[.85vw] cursor-pointer hover:bg-[#2d54ab] transition-all flex justify-between items-center"
             >
-              <svg
-                className={`w-[1.2vw] h-[1.2vw] text-white transition-transform duration-200 ${
-                  expandedCategories[category] ? "rotate-90" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <div>
-                <h3 className="text-[1.15vw] font-bold text-white flex items-center gap-2">
-                  <span className="text-[1.3vw]">🔷</span> {category}
-                </h3>
-                <p className="text-[.85vw] text-purple-100">{Object.keys(sizes).length} Size{Object.keys(sizes).length > 1 ? 's' : ''}</p>
+              <div className="flex items-center gap-4">
+                <svg
+                  className={`w-[1.2vw] h-[1.2vw] transition-transform duration-200 ${
+                    expandedCompanies[companyName] ? "rotate-90" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                <div>
+                  <h3 className="text-[1.15vw] font-bold">{companyName}</h3>
+                  <p className="text-[.9vw] text-blue-100">
+                    {Object.keys(orders).length} Orders
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Sizes */}
-            {expandedCategories[category] && (
-              <div className="p-[1vw] space-y-[1vw]">
-                {Object.entries(sizes).map(([size, companies]) => {
-                  const sizeKey = `${category}-${size}`;
-                  const isSizeExpanded = expandedSizes[sizeKey];
+            {/* Orders within Company */}
+            {expandedCompanies[companyName] && (
+              <div className="space-y-[1.25vw] p-[1vw]">
+                {Object.entries(orders).map(
+                  ([orderKey, { order, products }]) => {
+                    const isOrderExpanded =
+                      expandedOrders[`${companyName}-${orderKey}`];
+                    const purchaseProducts = products || [];
 
-                  return (
-                    <div key={size} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[0.6vw] border border-blue-200 overflow-hidden">
-                      {/* Size Header */}
+                    return (
                       <div
-                        onClick={() => toggleSize(category, size)}
-                        className="px-[1vw] py-[.75vw] cursor-pointer hover:bg-blue-100 transition-all flex items-center gap-3"
+                        key={orderKey}
+                        className="bg-gray-50 border border-gray-400 rounded-lg overflow-hidden"
                       >
-                        <svg
-                          className={`w-[1vw] h-[1vw] text-blue-700 transition-transform duration-200 ${
-                            isSizeExpanded ? "rotate-90" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                        {/* Order Header */}
+                        <div
+                          onClick={() => toggleOrder(companyName, orderKey)}
+                          className="bg-gray-200 px-[1.5vw] py-[.85vw] cursor-pointer hover:bg-gray-300 transition-all flex justify-between items-center"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                        <h4 className="text-[1vw] font-semibold text-blue-900 flex items-center gap-2">
-                          <span className="text-[1.1vw]">📏</span> {size}
-                        </h4>
-                        <span className="text-[.8vw] text-blue-700 bg-blue-200 px-2 py-0.5 rounded-full">
-                          {companies.length} {companies.length === 1 ? 'Company' : 'Companies'}
-                        </span>
-                      </div>
+                          <div className="flex items-center gap-4 flex-1">
+                            <svg
+                              className={`w-[1.2vw] h-[1.2vw] transition-transform duration-200 text-gray-600 ${
+                                isOrderExpanded ? "rotate-90" : ""
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                            <div className="flex-1">
+                              <h4 className="text-[1.05vw] font-semibold text-gray-800">
+                                {orderKey}
+                              </h4>
+                              <div className="flex gap-6 mt-2 text-[.9vw] text-gray-600">
+                                <span>
+                                  <strong>Contact:</strong>{" "}
+                                  {order.contact.contactName}
+                                </span>
+                                <span>
+                                  <strong>Phone:</strong> {order.contact.phone}
+                                </span>
+                                <span>
+                                  <strong>Products:</strong>{" "}
+                                  {purchaseProducts.length}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
 
-                      {/* Companies Table */}
-                      {isSizeExpanded && (
-                        <div className="px-[1vw] pb-[1vw]">
-                          <table className="w-full border-collapse">
-                            <thead>
-                              <tr className="bg-gray-200">
-                                <th className="border border-gray-300 px-[1vw] py-[.6vw] text-left text-[.85vw] font-semibold">S.No</th>
-                                <th className="border border-gray-300 px-[1vw] py-[.6vw] text-left text-[.85vw] font-semibold">Company Name</th>
-                                <th className="border border-gray-300 px-[1vw] py-[.6vw] text-center text-[.85vw] font-semibold">Orders</th>
-                                <th className="border border-gray-300 px-[1vw] py-[.6vw] text-center text-[.85vw] font-semibold">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {companies.map((company, idx) => (
-                                <tr key={idx} className="hover:bg-white transition-colors">
-                                  <td className="border border-gray-300 px-[1vw] py-[.6vw] text-[.85vw]">{idx + 1}</td>
-                                  <td className="border border-gray-300 px-[1vw] py-[.6vw] text-[.85vw] font-semibold text-gray-800">
-                                    {company.companyName}
-                                  </td>
-                                  <td className="border border-gray-300 px-[1vw] py-[.6vw] text-center">
-                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded text-[.75vw] font-semibold">
-                                      {company.orders.length}
-                                    </span>
-                                  </td>
-                                  <td className="border border-gray-300 px-[1vw] py-[.6vw] text-center">
-                                    <button
-                                      onClick={() => handleOpenLabelQuantitySheet(company.companyName, category, size)}
-                                      className="px-[1vw] py-[.4vw] bg-indigo-600 text-white rounded-[0.4vw] text-[.85vw] font-medium hover:bg-indigo-700 cursor-pointer transition-all inline-flex items-center gap-[0.5vw]"
-                                    >
-                                      <span>👁️</span> View
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            {/* If you want a label-specific action, place it here; else omit */}
+                            <button
+                              onClick={() => handleOpenLabelQuantitySheetForOrder(order)}
+                              className="px-[1vw] py-[.35vw] bg-amber-600 text-white rounded hover:bg-amber-700 text-[.85vw] font-medium cursor-pointer"
+                            >
+                              Label Sheet
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+
+                        {/* Products Table */}
+                        {isOrderExpanded && (
+                          <div className="p-[1.5vw] bg-white">
+                            {purchaseProducts.length > 0 ? (
+                              <div className="overflow-x-auto rounded-lg">
+                                <table className="w-full border-collapse">
+                                  <thead>
+                                    <tr className="bg-gray-200">
+                                      <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                        S.No
+                                      </th>
+                                      <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                        Product
+                                      </th>
+                                      <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                        Size
+                                      </th>
+                                      <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                        IML Name
+                                      </th>
+                                      <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                        Type
+                                      </th>
+                                      <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                        Qty
+                                      </th>
+                                      <th className="border border-gray-300 px-[1.25vw] py-[.75vw] text-left text-[.85vw] font-semibold">
+                                        Action
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {purchaseProducts.map((product, idx) => {
+                                      const quantity = product.imlType.includes(
+                                        "LID"
+                                      )
+                                        ? product.lidLabelQty
+                                        : product.tubLabelQty;
+
+                                      return (
+                                        <tr
+                                          key={product.id || idx}
+                                          className="hover:bg-gray-50"
+                                        >
+                                          <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
+                                            {idx + 1}
+                                          </td>
+                                          <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw] font-medium">
+                                            {product.productName || "N/A"}
+                                          </td>
+                                          <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
+                                            {product.size || "N/A"}
+                                          </td>
+                                          <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
+                                            {product.imlName || "N/A"}
+                                          </td>
+                                          <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw]">
+                                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                                              {product.imlType || "N/A"}
+                                            </span>
+                                          </td>
+                                          <td className="border border-gray-300 px-[1.25vw] py-[.75vw] text-[.85vw] font-semibold">
+                                            {quantity || "0"}
+                                          </td>
+                                          <td className="border border-gray-300 px-[1vw] py-[.6vw] text-center">
+                                            <button
+                                              onClick={() => handleOpenLabelQuantitySheetForProduct(order, product)}
+                                              className="px-[1vw] py-[.4vw] bg-blue-600 text-white rounded-[0.4vw] text-[.85vw] font-medium hover:bg-blue-700 cursor-pointer transition-all inline-flex items-center gap-[0.5vw]"
+                                            >
+                                              Update
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <p className="text-center text-gray-500 py-[2vw]">
+                                No products moved to purchase
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                )}
               </div>
             )}
           </div>
@@ -690,8 +1051,18 @@ const PurchaseManagement = () => {
               }}
               className="px-[.75vw] py-[.4vw] bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[.75vw] font-medium transition-all flex items-center gap-1 cursor-pointer"
             >
-              <svg className="w-[1vw] h-[1vw]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg
+                className="w-[1vw] h-[1vw]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
               Refresh
             </button>
@@ -699,53 +1070,70 @@ const PurchaseManagement = () => {
             <span className="text-[.75vw] bg-blue-100 text-blue-800 px-2 py-1 rounded">
               {purchaseOrders.length} orders loaded
             </span>
-
           </div>
-             {/* Sheet Toggle Buttons */}
-              <div className="flex gap-[1vw] absolute right-[2%] mt-[-.5%]">
-                <button
-                  onClick={() => setActiveSheet("po")}
-                  className={`flex-1 px-[1vw] py-[.65vw] rounded-lg font-semibold text-[.9vw] transition-all duration-200 cursor-pointer border-2 ${
-                    activeSheet === "po"
-                      ? "bg-blue-600 text-white border-blue-700 shadow-md"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
+          {/* Sheet Toggle Buttons */}
+          <div className="flex gap-[1vw] absolute right-[2%] mt-[-.5%]">
+            <button
+              onClick={() => setActiveSheet("po")}
+              className={`flex-1 px-[1vw] py-[.65vw] rounded-lg font-semibold text-[.9vw] transition-all duration-200 cursor-pointer border-2 ${
+                activeSheet === "po"
+                  ? "bg-blue-600 text-white border-blue-700 shadow-md"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <svg
+                  className="w-[1.2vw] h-[1.2vw]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-[1.2vw] h-[1.2vw]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>PO Sheet</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setActiveSheet("label")}
-                  className={`flex-1 px-[1vw] py-[.65vw] rounded-lg font-semibold text-[.9vw] transition-all duration-200 cursor-pointer border-2 min-w-[13vw] ${
-                    activeSheet === "label"
-                      ? "bg-green-600 text-white border-green-700 shadow-md"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-[1.2vw] h-[1.2vw]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    <span>Label Quantity Sheet</span>
-                  </div>
-                </button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>PO Sheet</span>
               </div>
+            </button>
 
-          
+            <button
+              onClick={() => setActiveSheet("label")}
+              className={`flex-1 px-[1vw] py-[.65vw] rounded-lg font-semibold text-[.9vw] transition-all duration-200 cursor-pointer border-2 min-w-[13vw] ${
+                activeSheet === "label"
+                  ? "bg-green-600 text-white border-green-700 shadow-md"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <svg
+                  className="w-[1.2vw] h-[1.2vw]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                  />
+                </svg>
+                <span>Label Quantity Sheet</span>
+              </div>
+            </button>
+          </div>
         </div>
-
-       
 
         {/* Filters */}
         <div className="bg-white rounded-xl shadow-sm p-[1vw] mb-[1vw] border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-[.8vw] font-medium text-gray-700 mb-2">Search</label>
+              <label className="block text-[.8vw] font-medium text-gray-700 mb-2">
+                Search
+              </label>
               <div className="relative">
                 <input
                   type="text"
@@ -766,7 +1154,9 @@ const PurchaseManagement = () => {
             </div>
 
             <div>
-              <label className="block text-[.8vw] font-medium text-gray-700 mb-2">Filter by Product</label>
+              <label className="block text-[.8vw] font-medium text-gray-700 mb-2">
+                Filter by Product
+              </label>
               <select
                 value={selectedProduct}
                 onChange={(e) => {
@@ -777,13 +1167,17 @@ const PurchaseManagement = () => {
               >
                 <option value="">All Products</option>
                 {getUniqueProducts.map((product) => (
-                  <option key={product} value={product}>{product}</option>
+                  <option key={product} value={product}>
+                    {product}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-[.8vw] font-medium text-gray-700 mb-2">Filter by Size</label>
+              <label className="block text-[.8vw] font-medium text-gray-700 mb-2">
+                Filter by Size
+              </label>
               <select
                 value={selectedSize}
                 onChange={(e) => setSelectedSize(e.target.value)}
@@ -792,7 +1186,9 @@ const PurchaseManagement = () => {
               >
                 <option value="">All Sizes</option>
                 {getUniqueSizesForProduct.map((size) => (
-                  <option key={size} value={size}>{size}</option>
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
                 ))}
               </select>
             </div>

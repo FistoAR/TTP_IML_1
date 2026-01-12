@@ -318,8 +318,8 @@ const PODetails = () => {
     });
 
     if (missingFields.length > 0) {
-      alert(`⚠️ Please fill all fields for:\n${missingFields.join("\n")}`);
-      return;
+      // alert(`⚠️ Please fill all fields for:\n${missingFields.join("\n")}`);
+      // return;
     }
 
     // Save to localStorage
@@ -560,34 +560,40 @@ const PODetails = () => {
 
                           {product.imlType === "LID & TUB" ? (
                             <div className="flex flex-col gap-1">
-                              <input
-                                type="text"
-                                placeholder="PO # (Lid)"
-                                value={details.lid?.poNumber || ""}
-                                onChange={(e) =>
-                                  updateProductField(
-                                    product.id,
-                                    "poNumber",
-                                    e.target.value,
-                                    "lid"
-                                  )
-                                }
-                                className="border px-2 py-1 rounded text-sm"
-                              />
-                              <input
-                                type="text"
-                                placeholder="PO # (Tub)"
-                                value={details.tub?.poNumber || ""}
-                                onChange={(e) =>
-                                  updateProductField(
-                                    product.id,
-                                    "poNumber",
-                                    e.target.value,
-                                    "tub"
-                                  )
-                                }
-                                className="border px-2 py-1 rounded text-sm"
-                              />
+                              <div className="flex gap-[1vw]">
+                                <p>LID: </p>
+                                <input
+                                  type="text"
+                                  placeholder="PO # (Lid)"
+                                  value={details.lid?.poNumber || ""}
+                                  onChange={(e) =>
+                                    updateProductField(
+                                      product.id,
+                                      "poNumber",
+                                      e.target.value,
+                                      "lid"
+                                    )
+                                  }
+                                  className="border px-2 py-1 rounded text-sm"
+                                />
+                              </div>
+                              <div className="flex gap-[.7vw]">
+                                <p>TUB: </p>
+                                <input
+                                  type="text"
+                                  placeholder="PO # (Tub)"
+                                  value={details.tub?.poNumber || ""}
+                                  onChange={(e) =>
+                                    updateProductField(
+                                      product.id,
+                                      "poNumber",
+                                      e.target.value,
+                                      "tub"
+                                    )
+                                  }
+                                  className="border px-2 py-1 rounded text-sm"
+                                />
+                              </div>
                             </div>
                           ) : (
                             <input
@@ -611,20 +617,23 @@ const PODetails = () => {
                           {product.imlType === "LID & TUB" ? (
                             <div className="flex flex-col gap-1 relative">
                               {/* Lid Label Type */}
-                              <input
-                                type="text"
-                                placeholder="Label Type (Lid)"
-                                value={details.lid?.labelType || ""}
-                                onChange={(e) =>
-                                  handleProductAutocomplete(
-                                    product.id,
-                                    "labelType",
-                                    e.target.value,
-                                    "lid"
-                                  )
-                                }
-                                className="border px-2 py-1 rounded text-sm"
-                              />
+                              <div className="flex gap-[1vw]">
+                                <p>LID: </p>
+                                <input
+                                  type="text"
+                                  placeholder="Label Type (Lid)"
+                                  value={details.lid?.labelType || ""}
+                                  onChange={(e) =>
+                                    handleProductAutocomplete(
+                                      product.id,
+                                      "labelType",
+                                      e.target.value,
+                                      "lid"
+                                    )
+                                  }
+                                  className="border px-2 py-1 rounded text-sm"
+                                />
+                              </div>
                               {activeAutocomplete?.productId === product.id &&
                                 activeAutocomplete?.field ===
                                   "labelType-lid" && (
@@ -651,20 +660,23 @@ const PODetails = () => {
                                 )}
 
                               {/* Tub Label Type */}
-                              <input
-                                type="text"
-                                placeholder="Label Type (Tub)"
-                                value={details.tub?.labelType || ""}
-                                onChange={(e) =>
-                                  handleProductAutocomplete(
-                                    product.id,
-                                    "labelType",
-                                    e.target.value,
-                                    "tub"
-                                  )
-                                }
-                                className="border px-2 py-1 rounded text-sm"
-                              />
+                              <div className="flex gap-[.7vw]">
+                                <p>TUB: </p>
+                                <input
+                                  type="text"
+                                  placeholder="Label Type (Tub)"
+                                  value={details.tub?.labelType || ""}
+                                  onChange={(e) =>
+                                    handleProductAutocomplete(
+                                      product.id,
+                                      "labelType",
+                                      e.target.value,
+                                      "tub"
+                                    )
+                                  }
+                                  className="border px-2 py-1 rounded text-sm"
+                                />
+                              </div>
                               {activeAutocomplete?.productId === product.id &&
                                 activeAutocomplete?.field ===
                                   "labelType-tub" && (
@@ -736,20 +748,23 @@ const PODetails = () => {
                           {product.imlType === "LID & TUB" ? (
                             <div className="flex flex-col gap-1 relative">
                               {/* Lid Supplier */}
-                              <input
-                                type="text"
-                                placeholder="Supplier (Lid)"
-                                value={details.lid?.supplier || ""}
-                                onChange={(e) =>
-                                  handleProductAutocomplete(
-                                    product.id,
-                                    "supplier",
-                                    e.target.value,
-                                    "lid"
-                                  )
-                                }
-                                className="border px-2 py-1 rounded text-sm"
-                              />
+                              <div className="flex gap-[1vw]">
+                                <p>LID: </p>
+                                <input
+                                  type="text"
+                                  placeholder="Supplier (Lid)"
+                                  value={details.lid?.supplier || ""}
+                                  onChange={(e) =>
+                                    handleProductAutocomplete(
+                                      product.id,
+                                      "supplier",
+                                      e.target.value,
+                                      "lid"
+                                    )
+                                  }
+                                  className="border px-2 py-1 rounded text-sm"
+                                />
+                              </div>
                               {activeAutocomplete?.productId === product.id &&
                                 activeAutocomplete?.field ===
                                   "supplier-lid" && (
@@ -776,20 +791,23 @@ const PODetails = () => {
                                 )}
 
                               {/* Tub Supplier */}
-                              <input
-                                type="text"
-                                placeholder="Supplier (Tub)"
-                                value={details.tub?.supplier || ""}
-                                onChange={(e) =>
-                                  handleProductAutocomplete(
-                                    product.id,
-                                    "supplier",
-                                    e.target.value,
-                                    "tub"
-                                  )
-                                }
-                                className="border px-2 py-1 rounded text-sm"
-                              />
+                              <div className="flex gap-[.7vw]">
+                                <p>TUB: </p>
+                                <input
+                                  type="text"
+                                  placeholder="Supplier (Tub)"
+                                  value={details.tub?.supplier || ""}
+                                  onChange={(e) =>
+                                    handleProductAutocomplete(
+                                      product.id,
+                                      "supplier",
+                                      e.target.value,
+                                      "tub"
+                                    )
+                                  }
+                                  className="border px-2 py-1 rounded text-sm"
+                                />
+                              </div>
                               {activeAutocomplete?.productId === product.id &&
                                 activeAutocomplete?.field ===
                                   "supplier-tub" && (

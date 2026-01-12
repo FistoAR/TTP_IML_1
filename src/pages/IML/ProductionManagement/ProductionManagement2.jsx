@@ -16,11 +16,17 @@ const ProductionManagement = () => {
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [activeSheet, setActiveSheet] = useState("tracking");
-  
+
   // Expand states
   const [expandedCategories, setExpandedCategories] = useState({});
   const [expandedSizes, setExpandedSizes] = useState({});
   const [expandedColors, setExpandedColors] = useState({});
+
+  const toNumber = (value) => {
+    if (!value || value == '0') return 0;
+    return Number(String(value).replace(/,/g, ''));
+  };
+
 
   // Load production data
   const loadProductionData = () => {
@@ -48,8 +54,35 @@ const ProductionManagement = () => {
             const key = `${order.id}_${product.id}`;
             const labelInfo = labelData[key];
 
+            const storedProduction = localStorage.getItem(STORAGE_KEY_PRODUCTION_FOLLOWUPS);
+            const allProductionData = storedProduction ? JSON.parse(storedProduction) : {};
+            const followups = allProductionData[key] || [];
+
+            const totalLabels = labelInfo ? labelInfo.noOfLabels : 0;  // Use noOfLabels as total
+            console.log(`Label Info: ${JSON.stringify(labelInfo, null, 2)}`);
+            // console.log("Total Labels: ", totalLabels);
+
+            const usedLabels = followups.reduce((sum, e) => {
+              const accepted = Number(e.acceptedComponents) || 0;
+              return sum + accepted;
+            }, 0);
+
+            // order.forEach((o, k) => {
+            //   console.log(`Order Item: ${o} - ${k}`);
+            // })
+            // Object.keys(order => ())
+            // console.log(`Order details: ${JSON.stringify(order, null, 2)}`);
+            // console.log(`Product details: ${product}`);
+            
+            
             // Only include if labels have been received
             if (labelInfo && labelInfo.receivedQuantity > 0) {
+              const remainingLabels = Math.max((labelInfo.receivedQuantity || 0) - usedLabels, 0);
+
+              // console.log(`Product: ${product.productName} ${product.size}`)
+              // console.log(`Used labels: ${usedLabels}`)
+              console.log(`Total labels: ${product.noOfLabels}`)
+              console.log(`Remaining labels: ${remainingLabels}`)
               productionItems.push({
                 id: key,
                 orderId: order.id,
@@ -66,11 +99,17 @@ const ProductionManagement = () => {
                 orderQuantity: labelInfo.orderQuantity,
                 receivedQuantity: labelInfo.receivedQuantity,
                 allReceived: labelInfo.allReceived || false,
+                remainingLabels,
               });
+              
             }
+            
           }
         });
+
       });
+
+    
 
       console.log("✅ Production items loaded:", productionItems.length);
       setProductionData(productionItems);
@@ -122,17 +161,18 @@ const ProductionManagement = () => {
   }, [productionData]);
 
   // Get production status
-  const getProductionStatus = (itemId) => {
+  const getProductionStatus = (item) => {
     const storedFollowups = localStorage.getItem(STORAGE_KEY_PRODUCTION_FOLLOWUPS);
-    if (!storedFollowups) return "Pending";
+    const followups = storedFollowups ? JSON.parse(storedFollowups)[item.id] : [];
 
-    const followups = JSON.parse(storedFollowups);
-    const entries = followups[itemId];
-
-    if (!entries || entries.length === 0) return "Pending";
-    
+    console.log(`Item: ${item}`);
+    console.log(`Followups: ${followups}`);
+    console.log(`Items Remaining Labels: ${item.remainingLabels}`);
+    if (!followups || followups.length === 0) return "Pending";
+    if (item.remainingLabels === 0) return "Completed";
     return "In Progress";
   };
+
 
   // Group by hierarchy: Category → Size → Color
   const groupByHierarchy = () => {
@@ -312,7 +352,6 @@ const ProductionManagement = () => {
           </div>
         </div>
 
-
         {/* Filters */}
         <div className="bg-white rounded-xl shadow-sm p-[1vw] mb-[1vw] border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -427,12 +466,12 @@ const ProductionManagement = () => {
           {Object.entries(filteredHierarchy).map(([category, sizes]) => (
             <div
               key={category}
-              className="bg-white rounded-lg shadow-sm border-2 border-purple-300 overflow-hidden"
+              className="bg-white rounded-lg shadow-sm border-2 border-neutral-200 overflow-hidden"
             >
               {/* Category Header */}
               <div
                 onClick={() => toggleCategory(category)}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 px-[1.5vw] py-[.85vw] cursor-pointer hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-4"
+                className="bg-neutral-600 px-[1.5vw] py-[.85vw] cursor-pointer hover:bg-neutral-700 transition-all flex items-center gap-4"
               >
                 <svg
                   className={`w-[1.2vw] h-[1.2vw] text-white transition-transform duration-200 ${
@@ -451,7 +490,22 @@ const ProductionManagement = () => {
                 </svg>
                 <div>
                   <h3 className="text-[1.15vw] font-bold text-white flex items-center gap-2">
-                    <span className="text-[1.3vw]">🔷</span> {category}
+                    <span className="text-[1.3vw]">
+                      <svg
+                        className="w-[1.3vw] h-[1.3vw] mr-1 text-slate-600"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="3" y="8" width="18" height="12" rx="2" />
+                        <path d="M2 8h20" />
+                        <path d="M8 4h8" />
+                      </svg>
+                    </span>{" "}
+                    {category}
                   </h3>
                   <p className="text-[.85vw] text-purple-100">
                     {Object.keys(sizes).length} Size
@@ -536,8 +590,8 @@ const ProductionManagement = () => {
                                       />
                                     </svg>
                                     <h5 className="text-[.9vw] font-semibold text-green-900 flex items-center gap-2">
-                                      <span className="text-[1vw]">🎨</span>{" "}
-                                      Lid & Tub: {color}
+                                      <span className="text-[1vw]">🎨</span> Lid
+                                      & Tub: {color}
                                     </h5>
                                     <span className="text-[.75vw] text-green-700 bg-green-200 px-2 py-0.5 rounded-full">
                                       {items.length} Item
@@ -576,8 +630,9 @@ const ProductionManagement = () => {
                                         </thead>
                                         <tbody>
                                           {items.map((item, idx) => {
-                                            const status =
-                                              getProductionStatus(item.id);
+                                            const status = getProductionStatus(
+                                              item.id
+                                            );
                                             return (
                                               <tr
                                                 key={idx}
@@ -587,10 +642,10 @@ const ProductionManagement = () => {
                                                   {idx + 1}
                                                 </td>
                                                 <td className="border border-gray-300 px-[0.75vw] py-[.6vw] text-[.8vw] font-semibold">
-                                                    {item.companyName}
+                                                  {item.companyName}
                                                 </td>
                                                 <td className="border border-gray-300 px-[0.75vw] py-[.6vw] text-[.8vw] font-semibold">
-                                                    {item.imlName}
+                                                  {item.imlName}
                                                 </td>
                                                 <td className="border border-gray-300 px-[0.75vw] py-[.6vw] text-[.8vw]">
                                                   <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[.75vw] font-semibold">
